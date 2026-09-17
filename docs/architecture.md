@@ -6,10 +6,10 @@ This document outlines the visual structure, design tokens, and animation system
 
 ## 1. Design Philosophy
 
-The site embodies a futuristic, cryptographic aesthetic centered on the theme **"Something is cooking."** It merges:
-- **Culinary Alchemy & Blockchain Genesis**: The central crucible acts as an oven/furnace forging cryptographic blocks, state transitions, and zero-knowledge privacy pools.
-- **OLED Void Palette**: Deep background shades (`#05070b`) accented by thermal gradients (`#ff5e36`, `#f59e0b`) and cybernetic highlights (`#00f0ff`, `#8b5cf6`).
-- **Zero-Dependency Philosophy**: High performance, instant loading, and 60fps animations utilizing only vanilla browser capabilities (HTML5, CSS3, 2D Canvas).
+The site embodies a crisp, modern, light-mode cryptographic aesthetic centered on the theme **"Something is cooking."** It harmonizes:
+- **The Official Resilience Shield (`logo.png`)**: A bold royal cobalt blue background (`#002fa6`), striking golden yellow shield contour (`#fdc703`), and angular white monogram 'R'.
+- **Clean Swiss / Fintech Light Palette**: Pristine off-white backdrop (`#f8fafc`) accented by soft luminous radial auras in royal blue and warm gold.
+- **Zero-Dependency Philosophy**: High performance, instant loading, and smooth 60fps animations utilizing only vanilla browser capabilities (HTML5, CSS3, 2D Canvas).
 
 ---
 
@@ -19,17 +19,20 @@ The interface styles are governed by centralized CSS custom properties in `index
 
 ```css
 :root {
-  /* Color Canvas */
-  --bg-dark: #05070b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-dim: #475569;
+  /* Brand Colors from logo.png */
+  --brand-blue: #002fa6;
+  --brand-blue-deep: #001f73;
+  --brand-blue-light: #e8edff;
+  --brand-gold: #fdc703;
+  --brand-gold-warm: #f59e0b;
+  --brand-gold-soft: #fffbeb;
 
-  /* Radiant Accents */
-  --accent-flame: #ff5e36;
-  --accent-amber: #f59e0b;
-  --accent-cyan: #00f0ff;
-  --accent-violet: #8b5cf6;
+  /* Light Canvas & Cards */
+  --bg-canvas: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --text-heading: #0b1528;
+  --text-body: #334155;
+  --text-muted: #64748b;
 
   /* Typography */
   --font-display: 'Outfit', sans-serif;
@@ -41,31 +44,24 @@ The interface styles are governed by centralized CSS custom properties in `index
 
 ## 3. Core Visual Components
 
-### A. The 3D Cryptographic Crucible
-- **Structure**: Multi-layered container with an SVG crucible body, bubbling molten core, and base heat flames.
-- **Parallax Tilt**: Uses real-time pointer coordinates to apply perspective transforms:
+### A. The 3D Resilience Shield Chamber
+- **Emblem Card**: Displays `logo.png` inside an elevated card with multi-stage drop shadows.
+- **Parallax Tilt**: Real-time cursor coordinates apply smooth 3D perspective transforms:
   ```javascript
-  const tiltX = -yPercent * 16;
-  const tiltY = xPercent * 16;
-  core.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+  const tiltX = -yPercent * 14;
+  const tiltY = xPercent * 14;
+  emblem.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
   ```
-- **Rising Steam Vapors**: Four staggered CSS-animated blur nodes simulating heat convection.
+- **Rising Steam Vapors**: Soft gold and blue blurred nodes simulating convective energy.
 - **Dual Orbital Rings**: Counter-rotating dashed and dotted orbital tracks carrying cryptographic badges (`Orchard ZK`, `EVM State`, `PoS Consensus`, `Guardian Auth`).
 
 ### B. Ambient Background Canvas
-- **Sparks & Embers**: 48 particles drifting upward with random horizontal jitter and individual alpha decay.
-- **Constellation Mesh**: Dynamic line rendering between any two particles within a 100px proximity radius.
+- **Sparks & Embers**: 40 royal blue and golden spores floating upward with gentle horizontal drift.
+- **Constellation Mesh**: Soft connective lines dynamically drawn between nearby particles within a 90px threshold.
 
 ### C. Live Telemetry Strip
-- A glassmorphism pill displaying live metrics:
-  - Simulated block height incrementing periodically.
-  - Constant PoS consensus health indicator.
-  - Shielded privacy and EVM compatibility markers.
-  - Dynamic ambient crucible temperature fluctuating around 1,337°C.
-
----
-
-## 4. Responsive Layout Breakpoints
-
-- **Desktop (1024px+)**: Full viewport height (100vh) single-screen presentation without scrollbars.
-- **Tablet / Mobile (<680px)**: Natural vertical stacking, scaled-down crucible chamber, and centered footer elements to accommodate small screens comfortably.
+- A clean glassmorphism pill displaying live metrics:
+  - Dynamic block height incrementing periodically.
+  - Active PoS consensus health.
+  - Native Orchard ZK privacy marker.
+  - Ambient crucible heat sensor fluctuating around 1,337°C.
