@@ -1,67 +1,49 @@
 # Website Architecture & Design System
 
-This document outlines the visual structure, design tokens, and animation systems powering `ResilienceNetwork.xyz`.
+This document outlines the visual structure, design tokens, and technical implementation of the Resilience Network research web portal (`resiliencenetwork.xyz`).
 
 ---
 
 ## 1. Design Philosophy
 
-The site embodies a crisp, modern, light-mode cryptographic aesthetic centered on the theme **"Something is cooking."** It harmonizes:
-- **The Official Resilience Shield (`logo.png`)**: A bold royal cobalt blue background (`#002fa6`), striking golden yellow shield contour (`#fdc703`), and angular white monogram 'R'.
-- **Clean Swiss / Fintech Light Palette**: Pristine off-white backdrop (`#f8fafc`) accented by soft luminous radial auras in royal blue and warm gold.
-- **Zero-Dependency Philosophy**: High performance, instant loading, and smooth 60fps animations utilizing only vanilla browser capabilities (HTML5, CSS3, 2D Canvas).
+The site embodies an authoritative, intellectual, and peer-reviewed cryptographic research institute aesthetic (analogous to Paradigm, Flashbots, and Ethereum Research).
+- **Sole Mark Principle**: The official Resilience Shield (`logo.png`) is featured strictly once in the navigation header as an institutional hallmark.
+- **Editorial Gravitas**: Headings styled in `Instrument Serif` contrasted against geometric sans (`Plus Jakarta Sans`) and monospace code notation (`JetBrains Mono`).
+- **Mathematical Interactive Visualization**: A dynamic 2D canvas arithmetization model simulating Halo 2 polynomial constraint lattices and Merkle note commitments with mouse gravitation physics.
+- **Zero Framework Footprint**: Pure semantic HTML5, CSS custom properties, and vanilla ES6 JavaScript.
 
 ---
 
 ## 2. Design Tokens (`:root`)
 
-The interface styles are governed by centralized CSS custom properties in `index.html`:
-
 ```css
 :root {
-  /* Brand Colors from logo.png */
-  --brand-blue: #002fa6;
-  --brand-blue-deep: #001f73;
-  --brand-blue-light: #e8edff;
-  --brand-gold: #fdc703;
-  --brand-gold-warm: #f59e0b;
-  --brand-gold-soft: #fffbeb;
+  /* Brand Accents */
+  --color-blue: #002fa6;
+  --color-blue-dark: #001f73;
+  --color-blue-tint: #f0f4ff;
+  --color-gold: #b45309;
+  --color-gold-bright: #d97706;
 
-  /* Light Canvas & Cards */
-  --bg-canvas: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.88);
-  --text-heading: #0b1528;
-  --text-body: #334155;
-  --text-muted: #64748b;
+  /* Editorial Light Canvas */
+  --color-canvas: #ffffff;
+  --color-canvas-alt: #f8fafc;
+  --color-border: #e2e8f0;
 
   /* Typography */
-  --font-display: 'Outfit', sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 ```
 
 ---
 
-## 3. Core Visual Components
+## 3. Structural Components
 
-### A. The 3D Resilience Shield Chamber
-- **Emblem Card**: Displays `logo.png` inside an elevated card with multi-stage drop shadows.
-- **Parallax Tilt**: Real-time cursor coordinates apply smooth 3D perspective transforms:
-  ```javascript
-  const tiltX = -yPercent * 14;
-  const tiltY = xPercent * 14;
-  emblem.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-  ```
-- **Rising Steam Vapors**: Soft gold and blue blurred nodes simulating convective energy.
-- **Dual Orbital Rings**: Counter-rotating dashed and dotted orbital tracks carrying cryptographic badges (`Orchard ZK`, `EVM State`, `PoS Consensus`, `Guardian Auth`).
-
-### B. Ambient Background Canvas
-- **Sparks & Embers**: 40 royal blue and golden spores floating upward with gentle horizontal drift.
-- **Constellation Mesh**: Soft connective lines dynamically drawn between nearby particles within a 90px threshold.
-
-### C. Live Telemetry Strip
-- A clean glassmorphism pill displaying live metrics:
-  - Dynamic block height incrementing periodically.
-  - Active PoS consensus health.
-  - Native Orchard ZK privacy marker.
-  - Ambient crucible heat sensor fluctuating around 1,337°C.
+1. **Academic Top Navigation**: Displays the single official emblem, protocol metadata badge, and direct links to GitHub, architecture documentation, and live epoch status.
+2. **Hero Abstract & Thesis**: Large serif declaration ("Something is cooking in the cryptography lab") followed by an academic abstract detailing the state machine mechanics.
+3. **Interactive Halo 2 Constraint Mesh**: Real-time canvas rendering polynomial commitment nodes, algebraic root indicators ($\omega^i$), and interactive mouse gravitational vector fields.
+4. **Architectural Research Pillars (Tracks 01—04)**: Technical breakdowns covering Orchard Zero-Knowledge Shielded Pools, Deterministic PoS Consensus, Native EVM Execution, and Guardian Social Recovery.
+5. **Protocol Specification Manifest**: A formal parameter table detailing the consensus quorum, curve cycles, hash algorithms, and genesis commitments.
+6. **Academic Footer**: Links to research tracks, protocol security index, reference vectors, and formal test harness specifications.
