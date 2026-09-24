@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocol Specification — Resilience Network</title>
+  <meta name="description" content="The Resilience Network protocol surface: BFT Proof-of-Stake consensus with ECVRF leader election, Cancun-compatible EVM execution, native Orchard shielded state, and session authorization with guardian recovery.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Resilience Network">
+  <meta property="og:title" content="Protocol Specification — Resilience Network">
+  <meta property="og:description" content="BFT Proof-of-Stake consensus, Cancun-compatible EVM execution, native Orchard shielded state, and session authorization — as built, with canonical sources.">
+  <meta property="og:url" content="https://resiliencenetwork.xyz/protocol.html">
+  <meta property="og:image" content="https://resiliencenetwork.xyz/logo.png">
+  <meta name="twitter:card" content="summary">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="brand-identity" aria-label="Resilience Network Research Homepage">
+          <img src="logo.png" class="brand-logo-img" alt="Resilience Network Insignia">
+          <div class="brand-meta">
+            <span class="brand-title">Resilience Network</span>
+            <span class="brand-subtitle">Protocol Research &amp; Synthesis</span>
+          </div>
+        </a>
+
+        <nav class="nav-meta-links" aria-label="Primary">
+          <a href="protocol.html" class="nav-link" aria-current="page">Protocol</a>
+          <a href="research.html" class="nav-link">Research</a>
+          <a href="status.html" class="nav-link">Status</a>
+          <a href="decisions.html" class="nav-link">Decisions</a>
+          <a href="get-started.html" class="nav-link">Get Started</a>
+          <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub&nbsp;↗</a>
+          <div class="status-indicator">
+            <span class="status-pulse"></span>
+            <span>Pre-Mainnet Epoch 0</span>
+          </div>
+        </nav>
+
+        <button class="nav-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Toggle navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Primary mobile">
+      <a href="protocol.html" class="nav-link" aria-current="page">Protocol</a>
+      <a href="research.html" class="nav-link">Research</a>
+      <a href="status.html" class="nav-link">Status</a>
+      <a href="decisions.html" class="nav-link">Decisions</a>
+      <a href="get-started.html" class="nav-link">Get Started</a>
+      <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <div class="status-indicator">
+        <span class="status-pulse"></span>
+        <span>Pre-Mainnet Epoch 0</span>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-hero">
+      <div class="hero-eyebrow">// PROTOCOL SPECIFICATION</div>
+      <h1 class="page-title">The protocol, <em>as built</em>.</h1>
+      <p class="page-abstract">
+        Four tracks, one deterministic state machine. This page summarizes the protocol surface of the current checkout — every mechanism links to its <strong>canonical specification in the repository</strong>, which owns supported behavior. A feature present in code is not necessarily activated on a given network or qualified for production.
+      </p>
+    </section>
+
+    <section class="stat-strip" aria-label="Protocol quick facts">
+      <div class="stat-cell">
+        <div class="stat-value">2/3+1</div>
+        <div class="stat-label">BFT Quorum</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">2s</div>
+        <div class="stat-label">Slot Defaults (FR-009)</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">66</div>
+        <div class="stat-label">RPC Methods</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">1337</div>
+        <div class="stat-label">Dev Chain ID</div>
+      </div>
+    </section>
+
+    <!-- Track 01 -->
+    <section class="section" id="consensus-finality">
+      <div class="section-header">
+        <h2 class="section-title">Consensus &amp; Finality</h2>
+        <span class="section-index">Track 01</span>
+      </div>
+      <div class="prose">
+        <p>
+          A Byzantine fault-tolerant Proof-of-Stake engine with a 2/3+1 stake-weighted quorum. Finality is deterministic: once a block is committed under the quorum rule it does not revert absent a byzantine violation of that rule, which is slashable. Validator votes are Ed25519 signatures bounded by <strong>signing watermarks</strong> and persisted <strong>durable consensus locks</strong>, so a restarting or partitioned validator cannot equivocate across a recovery boundary.
+        </p>
+        <p>
+          Block proposers are selected by <strong>secret leader election</strong>: each validator privately evaluates an RFC 9381 ECVRF over the current view, and a verifiable claim proves the winner without disclosing the schedule in advance — closing proposer-targeted DoS one slot ahead of time. The winner's VRF output doubles as the block randomness field. Making that beacon <em>unbiasable</em> is an open research track; see <a href="decisions.html">Decisions</a>.
+        </p>
+        <h3>Key mechanisms</h3>
+        <ul>
+          <li>2/3+1 quorum certificates with deterministic single-slot commitment</li>
+          <li>ECVRF secret leader election with verifiable claims</li>
+          <li>Persisted lock/certificate rules across restarts and partitions</li>
+          <li>Validator locks, signing watermarks and enshrined slashing</li>
+          <li>Transferable validator-specific delegation shares (FR-007)</li>
+        </ul>
+        <p class="footnote">CANONICAL: docs/architecture/consensus.md · docs/reference/protocol/leader-election.md · consensus-locking.md · staking.md</p>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/consensus.md" target="_blank" rel="noopener noreferrer">READ THE CONSENSUS ARCHITECTURE ↗</a></p>
+      </div>
+    </section>
+
+    <!-- Track 02 -->
+    <section class="section" id="evm-execution">
+      <div class="section-header">
+        <h2 class="section-title">EVM Execution</h2>
+        <span class="section-index">Track 02</span>
+      </div>
+      <div class="prose">
+        <p>
+          The execution layer runs Ethereum Virtual Machine bytecode with Cancun-compatible semantics over an Ethereum-style state trie, exposed through a 66-method JSON-RPC surface (<span class="mono">web3</span>, <span class="mono">net</span>, <span class="mono">eth</span>, <span class="mono">rsc</span>) so existing tooling — wallets, block explorers, deployment pipelines — can speak to the chain without adapters.
+        </p>
+        <p>
+          Fees follow an EIP-1559-style model (FR-002): a protocol base fee that adjusts per block and is burned, plus proposer tips bounded by user fee caps. <strong>Sponsored transactions</strong> (FR-004) let a separate payer carry the fees with its own witness and nonce. A native <strong>P-256 precompile</strong> (FR-013) brings secp256r1 verification on-chain, enabling WebAuthn-style session keys.
+        </p>
+        <h3>Key mechanisms</h3>
+        <ul>
+          <li>Cancun-compatible bytecode with metered execution and receipts</li>
+          <li>EIP-1559-style base fee, burn and tip accounting</li>
+          <li>Bounded sponsorship with a separate payer witness</li>
+          <li>P-256 verification precompile and session keys</li>
+          <li>Continuously differentially tested against a reference EVM</li>
+        </ul>
+        <p class="footnote">CANONICAL: docs/architecture/execution-state.md · docs/reference/protocol/fees.md · sponsored-transactions.md · p256-precompile.md · evm-differential.md</p>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/execution-state.md" target="_blank" rel="noopener noreferrer">READ THE EXECUTION ARCHITECTURE ↗</a></p>
+      </div>
+    </section>
+
+    <!-- Track 03 -->
+    <section class="section" id="shielded-state">
+      <div class="section-header">
+        <h2 class="section-title">Shielded State</h2>
+        <span class="section-index">Track 03</span>
+      </div>
+      <div class="prose">
+        <p>
+          The privacy layer is a native Orchard integration: deposits, private transfers and withdrawals move value into note commitments verified by recursive zero-knowledge proofs over the Pasta curve cycle (Pallas and Vesta) — <strong>no trusted setup ceremony</strong>. Nullifiers prevent double-spends without linking spenders to notes; Sinsemilla derives commitments inside the circuits. Shielded actions are verified by consensus itself, not by an external bridge or operator.
+        </p>
+        <p>
+          <strong>Selective disclosure</strong> (FR-001) is built in: viewing keys, watch-only import and sync, accounting export, outgoing-viewing-key recovery, and payment receipts. This layer is real but explicitly <strong>experimental</strong> — see the honest limits below and on the <a href="status.html">Status</a> page.
+        </p>
+        <div class="callout" role="note">
+          <div class="callout-label">// EXPERIMENTAL — READ BEFORE RELYING ON IT</div>
+          <p>Shielded activity requires a native (cgo) build with the Rust cryptography statically linked, an explicit experimental acknowledgment, and a trusted RPC for wallet scanning. Bulk historical sync is hash-bound. Independent external cryptographic qualification remains a release gate.</p>
+        </div>
+        <h3>Key mechanisms</h3>
+        <ul>
+          <li>Halo 2 Plonkish arithmetization over Pasta curves</li>
+          <li>Sinsemilla note commitments and BLAKE3/Poseidon hashing</li>
+          <li>Nullifier-based double-spend prevention with unlinkability</li>
+          <li>Viewing keys, watch-only sync and accounting export</li>
+          <li>Consensus-verified shielded actions</li>
+        </ul>
+        <p class="footnote">CANONICAL: docs/architecture/shielded.md · shielded-native-integration.md · docs/reference/protocol/shielded.md · shielded-capabilities.md</p>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">READ THE SHIELDED SPECIFICATION ↗</a></p>
+      </div>
+    </section>
+
+    <!-- Track 04 -->
+    <section class="section" id="authorization-recovery">
+      <div class="section-header">
+        <h2 class="section-title">Authorization &amp; Recovery</h2>
+        <span class="section-index">Track 04</span>
+      </div>
+      <div class="prose">
+        <p>
+          Accounts are sovereign by construction. <strong>Session authorization</strong> issues revocable, policy-constrained grants: a session key can do exactly what its policy permits, within budgets, for exactly as long as the grant lasts — and nothing else. Authority is layered (ROOT / DIRECT / SESSION), every grant is consensus-visible, and worst-case work is charged before it begins.
+        </p>
+        <p>
+          <strong>Guardian recovery</strong> (FR-012) is enshrined: an opt-in guardian quorum can replace account authority after a delay, without custodians or third-party relayers. <strong>Native names</strong> (FR-015) provide commit-reveal registration, renewal, transfer, target and reverse resolution on-chain.
+        </p>
+        <h3>Key mechanisms</h3>
+        <ul>
+          <li>Revocable, policy-constrained session grants with budgets</li>
+          <li>ROOT / DIRECT / SESSION authority layers</li>
+          <li>Opt-in guardian quorums with delayed authority replacement</li>
+          <li>Commit-reveal name registration and reverse resolution</li>
+          <li>P-256 session keys toward WebAuthn composition</li>
+        </ul>
+        <p class="footnote">CANONICAL: docs/architecture/authorization.md · docs/reference/protocol/session-authorization.md · guardian-recovery.md · nameservice.md</p>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/authorization.md" target="_blank" rel="noopener noreferrer">READ THE AUTHORIZATION ARCHITECTURE ↗</a></p>
+      </div>
+    </section>
+
+    <!-- Genesis parameters -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Genesis Commitments</h2>
+        <span class="section-index">Current Development Genesis</span>
+      </div>
+      <div class="specs-card" style="margin-bottom: 0;">
+        <div class="specs-header">
+          <h3 class="specs-title">Development Genesis Parameters</h3>
+          <p class="specs-sub">Every participating node must run a genesis whose protocol commitment matches. Mainnet commitments are fixed at the genesis ceremony, not patched in afterwards.</p>
+        </div>
+        <table class="specs-table">
+          <tbody>
+            <tr>
+              <td class="spec-label">Consensus Mechanism</td>
+              <td class="spec-value">Resilience Byzantine Fault-Tolerant PoS (2/3+1 Quorum)</td>
+            </tr>
+            <tr>
+              <td class="spec-label">Cryptographic Privacy Circuit</td>
+              <td class="spec-value">Halo 2 Plonkish Arithmetization (Pasta Curves)</td>
+            </tr>
+            <tr>
+              <td class="spec-label">Execution Environment</td>
+              <td class="spec-value">EVM Cancun Bytecode Compatible / State Snapshots</td>
+            </tr>
+            <tr>
+              <td class="spec-label">Hash Primitives</td>
+              <td class="spec-value">BLAKE3 (Internal State), Poseidon &amp; Sinsemilla (Circuits)</td>
+            </tr>
+            <tr>
+              <td class="spec-label">Slot Configuration</td>
+              <td class="spec-value">2-Second Slot Defaults (FR-009 Tuning, Not a Universal Finality Guarantee)</td>
+            </tr>
+            <tr>
+              <td class="spec-label">JSON-RPC Surface</td>
+              <td class="spec-value">66 Registered Methods (web3 · net · eth · rsc)</td>
+            </tr>
+            <tr>
+              <td class="spec-label">Dev Genesis Protocol Commitment</td>
+              <td class="spec-hash">0x055a2207c3b64ae0514a8482b771800dc3d7a8272b137e13096677c48798a8af</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="footnote">SOURCE: configs/genesis.json (CHAIN 1337, 4 VALIDATORS) — VERIFIABLE IN THE REPOSITORY</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-col-brand">
+          <div class="brand-title">Resilience Network Research</div>
+          <p class="footer-note">
+            An open-source, peer-reviewed distributed ledger exploring the intersection of zero-knowledge cryptography, Byzantine fault tolerance, and developer sovereignty.
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div>
+            <div class="footer-col-title">Site</div>
+            <ul class="footer-list">
+              <li><a href="protocol.html">Protocol Specification</a></li>
+              <li><a href="research.html">Research &amp; Assurance</a></li>
+              <li><a href="status.html">Status &amp; Roadmap</a></li>
+              <li><a href="decisions.html">Design Decisions</a></li>
+              <li><a href="get-started.html">Get Started</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Repositories</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain" target="_blank" rel="noopener noreferrer">Chain Core (Go)</a></li>
+              <li><a href="https://github.com/Resilience-Network/ResilienceNetwork.xyz" target="_blank" rel="noopener noreferrer">Web Portal</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/reference" target="_blank" rel="noopener noreferrer">Reference Vectors</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Documentation</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">Architecture Overview</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">Shielded State Specification</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/reference/rpc.md" target="_blank" rel="noopener noreferrer">JSON-RPC Methods</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Assurance</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">Security Index</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribution Guidelines</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 Resilience Network Research Foundation. All rights reserved.</span>
+        <span>Formal Verification · Proof-of-Stake · Orchard Privacy</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const toggle = document.querySelector('.nav-toggle');
+      const menu = document.getElementById('mobile-nav');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    })();
+  </script>
+</body>
+</html>

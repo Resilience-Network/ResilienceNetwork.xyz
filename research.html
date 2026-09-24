@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research &amp; Assurance — Resilience Network</title>
+  <meta name="description" content="Published load qualification numbers, per-subsystem threat models, EVM differential testing methodology, and 69 live-network user stories for the Resilience Network protocol.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Resilience Network">
+  <meta property="og:title" content="Research &amp; Assurance — Resilience Network">
+  <meta property="og:description" content="Published load numbers including failure cliffs, seven threat models, differential EVM testing, and 69 live user stories.">
+  <meta property="og:url" content="https://resiliencenetwork.xyz/research.html">
+  <meta property="og:image" content="https://resiliencenetwork.xyz/logo.png">
+  <meta name="twitter:card" content="summary">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="brand-identity" aria-label="Resilience Network Research Homepage">
+          <img src="logo.png" class="brand-logo-img" alt="Resilience Network Insignia">
+          <div class="brand-meta">
+            <span class="brand-title">Resilience Network</span>
+            <span class="brand-subtitle">Protocol Research &amp; Synthesis</span>
+          </div>
+        </a>
+
+        <nav class="nav-meta-links" aria-label="Primary">
+          <a href="protocol.html" class="nav-link">Protocol</a>
+          <a href="research.html" class="nav-link" aria-current="page">Research</a>
+          <a href="status.html" class="nav-link">Status</a>
+          <a href="decisions.html" class="nav-link">Decisions</a>
+          <a href="get-started.html" class="nav-link">Get Started</a>
+          <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub&nbsp;↗</a>
+          <div class="status-indicator">
+            <span class="status-pulse"></span>
+            <span>Pre-Mainnet Epoch 0</span>
+          </div>
+        </nav>
+
+        <button class="nav-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Toggle navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Primary mobile">
+      <a href="protocol.html" class="nav-link">Protocol</a>
+      <a href="research.html" class="nav-link" aria-current="page">Research</a>
+      <a href="status.html" class="nav-link">Status</a>
+      <a href="decisions.html" class="nav-link">Decisions</a>
+      <a href="get-started.html" class="nav-link">Get Started</a>
+      <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <div class="status-indicator">
+        <span class="status-pulse"></span>
+        <span>Pre-Mainnet Epoch 0</span>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-hero">
+      <div class="hero-eyebrow">// RESEARCH &amp; ASSURANCE</div>
+      <h1 class="page-title">We publish the <em>failure cliffs</em> too.</h1>
+      <p class="page-abstract">
+        Every number on this page comes from a recorded campaign, a signed report, or a test you can re-run. Historical results keep their dates and environments and are never re-quoted as fresh evidence. That is the whole discipline: <strong>claims trace to artifacts</strong>.
+      </p>
+    </section>
+
+    <section class="stat-strip" aria-label="Research quick facts">
+      <div class="stat-cell">
+        <div class="stat-value">≤20 TPS</div>
+        <div class="stat-label">Sustained Ceiling (2026-09-20)</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Threat Models</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">69</div>
+        <div class="stat-label">Live User Stories</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value">~1.5s</div>
+        <div class="stat-label">p50 Inclusion @ 20 TPS</div>
+      </div>
+    </section>
+
+    <!-- Load qualification -->
+    <section class="section" id="load-qualification">
+      <div class="section-header">
+        <h2 class="section-title">Load Qualification</h2>
+        <span class="section-index">Campaign 2026-09-20 · Issue #226</span>
+      </div>
+      <div class="prose">
+        <p>
+          The first published load numbers for the chain, run on 2026-09-20 against <span class="mono">origin/main @ 808d68b</span>: offered-load sweeps with mixed traffic (80% transfers / 20% SSTORE calls) across four RPC endpoints and many clients, on a native cgo build with a four-validator network.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Offered Load</th>
+              <th scope="col">Outcome</th>
+              <th scope="col">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>20 TPS · 30 min</td>
+              <td><span class="badge badge-blue">Stable</span></td>
+              <td>35,984 / 35,984 included · p50 1.5s · p95 3.8s — highest stable point</td>
+            </tr>
+            <tr>
+              <td>50 TPS · 60s</td>
+              <td><span class="badge badge-blue">Stable</span></td>
+              <td>Full inclusion · p50 ~1.5s · p95 ~4.3s</td>
+            </tr>
+            <tr>
+              <td>50 TPS · 32 min</td>
+              <td><span class="badge badge-gold">Unstable</span></td>
+              <td>Healthy ~5 min, then multi-minute halts (62/42/133/112s+ gaps)</td>
+            </tr>
+            <tr>
+              <td>75 TPS · 45s</td>
+              <td><span class="badge badge-gold">Degraded</span></td>
+              <td>Sporadic liveness: 5 blocks in 65s · 31% included</td>
+            </tr>
+            <tr>
+              <td>100–200 TPS</td>
+              <td><span class="badge badge-red">Frozen</span></td>
+              <td>~600–800 included in the first 6–12s, then multi-minute finality halt</td>
+            </tr>
+            <tr>
+              <td>500 TPS · 30s</td>
+              <td><span class="badge badge-red">Frozen</span></td>
+              <td>Zero blocks · 0 / 3,000 included</td>
+            </tr>
+            <tr>
+              <td>Single client · stock bench</td>
+              <td><span class="badge badge-gray">Capped</span></td>
+              <td>~10 TPS admitted by the per-IP submit limiter · 0 included (unfunded keys)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="prose" style="margin-top: 24px;">
+        <h3>Findings</h3>
+        <ul>
+          <li>The first bottleneck at every saturation point is <strong>consensus liveness</strong> (finality halts with the "all consensus rounds exhausted" signature, tracked in <a href="https://github.com/Resilience-Network/Chain/issues/210" target="_blank" rel="noopener noreferrer">issue #210</a>) — not execution, RPC throughput, mempool capacity, or disk.</li>
+          <li>The cliff is <strong>time-at-load</strong>, not just rate: 100+ TPS stalls in seconds; 50 TPS holds ~5 minutes then halts; 20 TPS holds 30 minutes clean.</li>
+          <li>The gas ceiling (~300 TPS for 50k-gas transfers at 30M gas / 2s slots) and the 4096-transaction mempool cap were never reached — liveness binds first.</li>
+          <li>Testnet sizing implication: plan <strong>≤20 TPS sustained</strong> until the liveness failure is root-caused and fixed.</li>
+        </ul>
+        <div class="callout" role="note">
+          <div class="callout-label">// ENVIRONMENT CAVEAT — LOWER BOUNDS</div>
+          <p>The campaign container was CPU-contended by other tenants (system load ~12–15 on 10 vCPUs). Latency tails and the exact position of the liveness cliff are therefore lower bounds under contention; a quiet host does the same or better, never worse for these mechanisms.</p>
+        </div>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/operations/load-qualification-2026-09-20.md" target="_blank" rel="noopener noreferrer">READ THE FULL REPORT ↗</a></p>
+      </div>
+    </section>
+
+    <!-- Threat models -->
+    <section class="section" id="threat-models">
+      <div class="section-header">
+        <h2 class="section-title">Threat Models</h2>
+        <span class="section-index">docs/security/threat-models</span>
+      </div>
+      <div class="prose" style="margin-bottom: 28px;">
+        <p>
+          Each subsystem carries its own threat model enumerating trust boundaries and the properties implementation and review must maintain. Status: <strong>candidate for review — not approved for production</strong>. The shielded model covers the current experimental native Orchard integration explicitly, and is not an independent audit report.
+        </p>
+      </div>
+
+      <div class="mini-card-grid">
+        <div class="mini-card">
+          <div class="mini-card-num">TM-01 // CONSENSUS</div>
+          <div class="mini-card-heading">Consensus / BFT</div>
+          <p class="mini-card-desc">Equivocation, lock violations, watermark attacks and quorum-boundary failures against the finality core.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/consensus-bft.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-02 // EXECUTION</div>
+          <div class="mini-card-heading">EVM Execution</div>
+          <p class="mini-card-desc">Metering, gas-accounting and state-trie attack surface for the deterministic execution engine.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/evm-execution.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-03 // NETWORKING</div>
+          <div class="mini-card-heading">P2P Networking</div>
+          <p class="mini-card-desc">Gossip, sync and candidate-admission abuse across the peer-to-peer layer.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/p2p.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-04 // MEMPOOL</div>
+          <div class="mini-card-heading">Transaction Pool &amp; MEV</div>
+          <p class="mini-card-desc">Ordering manipulation, admission pressure and MEV exposure in the mempool.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/txpool-mev.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-05 // PRIVACY</div>
+          <div class="mini-card-heading">Shielded State</div>
+          <p class="mini-card-desc">Trust boundaries and unlinkability properties of the experimental native Orchard integration.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/shielded.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-06 // AUTHORITY</div>
+          <div class="mini-card-heading">Session Authorization</div>
+          <p class="mini-card-desc">Grant forgery, policy bypass and budget-exhaustion paths in the authorization layer.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/session-authorization.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">TM-07 // PERSISTENCE</div>
+          <div class="mini-card-heading">Storage</div>
+          <p class="mini-card-desc">Database integrity, rollback boundaries and safety-state preservation on disk.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/threat-models/storage.md" target="_blank" rel="noopener noreferrer">READ ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">// INDEX</div>
+          <div class="mini-card-heading">Security Index</div>
+          <p class="mini-card-desc">The complete assurance surface: audit records, remediation reports and the historical archive.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">OPEN THE INDEX ↗</a>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-num">// RELEASE GATE</div>
+          <div class="mini-card-heading">External Qualification</div>
+          <p class="mini-card-desc">Independent external cryptographic qualification remains a release gate. It has not happened yet — and we say so.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/security/README.md" target="_blank" rel="noopener noreferrer">READ THE POLICY ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Verification methodology -->
+    <section class="section" id="methodology">
+      <div class="section-header">
+        <h2 class="section-title">Verification Methodology</h2>
+        <span class="section-index">How the claims are made</span>
+      </div>
+      <div class="prose">
+        <h3>Differential EVM testing</h3>
+        <p>
+          The EVM engine is continuously differentially tested against a reference implementation: the same transaction, replayed into both engines, must produce identical state transitions, gas and receipts. Divergences are bugs by definition, and get their own harness lanes.
+        </p>
+        <h3>Live-network user stories</h3>
+        <p>
+          Sixty-nine executable story files drive a real four-validator network end-to-end — session delegation, shielded pool invariants, staking boundaries, RPC integrity, offline guards — including dedicated byzantine-behavior and story-gate suites that must pass on every change.
+        </p>
+        <h3>Determinism and races</h3>
+        <p>
+          A determinism lint, race-enabled test runs, and a fresh-chain story harness back the deterministic-execution guarantee: same inputs, same state root, every time, on every validator.
+        </p>
+        <h3>Independent models and vectors</h3>
+        <p>
+          The <span class="mono">reference/</span> tree keeps independent models, formal artifacts and test vectors — including the native Rust cryptography — separate from the Go implementation, so conformance is checked against something other than the code that produced it.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span>VERIFY IT YOURSELF</span><span>SHELL</span></div>
+        <pre>git clone https://github.com/Resilience-Network/Chain.git
+cd Chain
+make build-crypto        <span class="cmt"># native Rust cryptography (required)</span>
+go mod verify
+go vet ./...
+go test -race -count=1 ./...</pre>
+      </div>
+      <p class="footnote">FULL SUITES — NATIVE PROOFS, FUZZING, STORY HARNESS: docs/guides/testing.md</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-col-brand">
+          <div class="brand-title">Resilience Network Research</div>
+          <p class="footer-note">
+            An open-source, peer-reviewed distributed ledger exploring the intersection of zero-knowledge cryptography, Byzantine fault tolerance, and developer sovereignty.
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div>
+            <div class="footer-col-title">Site</div>
+            <ul class="footer-list">
+              <li><a href="protocol.html">Protocol Specification</a></li>
+              <li><a href="research.html">Research &amp; Assurance</a></li>
+              <li><a href="status.html">Status &amp; Roadmap</a></li>
+              <li><a href="decisions.html">Design Decisions</a></li>
+              <li><a href="get-started.html">Get Started</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Repositories</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain" target="_blank" rel="noopener noreferrer">Chain Core (Go)</a></li>
+              <li><a href="https://github.com/Resilience-Network/ResilienceNetwork.xyz" target="_blank" rel="noopener noreferrer">Web Portal</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/reference" target="_blank" rel="noopener noreferrer">Reference Vectors</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Documentation</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">Architecture Overview</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">Shielded State Specification</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/reference/rpc.md" target="_blank" rel="noopener noreferrer">JSON-RPC Methods</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Assurance</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">Security Index</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribution Guidelines</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 Resilience Network Research Foundation. All rights reserved.</span>
+        <span>Formal Verification · Proof-of-Stake · Orchard Privacy</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const toggle = document.querySelector('.nav-toggle');
+      const menu = document.getElementById('mobile-nav');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -10,17 +10,27 @@ The official web portal and landing page for **Resilience Network** — an exper
 ## ✨ Features & Design Highlights
 
 - **Pure Vanilla Stack**: Built with semantic HTML5, modern CSS3 custom properties, and native JavaScript — 0 external npm dependencies required for runtime.
-- **Interactive 3D Cryptographic Crucible**: A floating, simmering core vessel with dynamic cursor parallax tilt, orbital feature rings, and rising vapor embers.
-- **Dynamic Living Background**: Real-time HTML5 canvas simulation with rising thermal sparks and responsive constellation network grid.
-- **Live Chain Telemetry**: Simulated real-time metrics tracking block height, PoS consensus status, and Orchard ZK cryptographic health.
-- **OLED Dark Aesthetic**: Rich obsidian canvas complemented by glowing cybernetic cyan (`#00f0ff`), fiery amber (`#ff5e36`), and deep violet (`#8b5cf6`).
+- **Multi-Page Research Portal**: A landing page plus five content sections — Protocol, Research & Assurance, Status & Roadmap, Design Decisions, and Get Started — every claim linking back to a canonical artifact in the Chain repository.
+- **Honest Telemetry**: No simulated chain data. The landing lattice is labeled as an interactive simulation, and the displayed genesis protocol commitment is the real value from `configs/genesis.json`.
+- **Interactive Mathematical Visualization**: A canvas-rendered Halo-2 constraint lattice with pointer attraction, commitment nodes and ω-power annotations.
+- **Light Academic Aesthetic**: Instrument Serif display type, Plus Jakarta Sans body, JetBrains Mono annotations, and a royal-blue/gold brand system on a clean canvas.
+- **Accessible & Responsive**: Semantic landmarks, single `<h1>` per page, ARIA-labelled navigation with a mobile menu, Open Graph metadata, sitemap and robots.txt.
 
 ---
 
 ## 📁 Repository Structure
 
 ```text
-├── index.html          # Main landing page & interactive visual experience
+├── index.html          # Landing page: pillars, portal index, genesis spec
+├── protocol.html       # Protocol specification: consensus, EVM, shielded, authorization
+├── research.html       # Research & assurance: load qualification, threat models, methodology
+├── status.html         # Capability matrix, known limits, milestone roadmap
+├── decisions.html      # Architecture decision records (ADRs)
+├── get-started.html    # Build, localnet, RPC and wallet onboarding
+├── styles.css          # Shared design system (tokens, components, responsive rules)
+├── sitemap.xml         # Search engine sitemap
+├── robots.txt          # Crawler policy
+├── logo.png            # Brand insignia
 ├── AGENTS.md           # Instructions & rules for autonomous agents and pair-programmers
 ├── CONTRIBUTING.md     # Branching guidelines, commit standards, and PR workflows
 ├── docs/               # Technical and design documentation

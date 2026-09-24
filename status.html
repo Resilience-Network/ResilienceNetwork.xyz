@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Status &amp; Roadmap — Resilience Network</title>
+  <meta name="description" content="Honest capability matrix for Resilience Network: what is implemented, what is experimental, current limits (≤20 TPS until the liveness fix), and the milestone roadmap to mainnet gates.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Resilience Network">
+  <meta property="og:title" content="Status &amp; Roadmap — Resilience Network">
+  <meta property="og:description" content="Capability matrix, known limits, and milestones — nothing hidden.">
+  <meta property="og:url" content="https://resiliencenetwork.xyz/status.html">
+  <meta property="og:image" content="https://resiliencenetwork.xyz/logo.png">
+  <meta name="twitter:card" content="summary">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="brand-identity" aria-label="Resilience Network Research Homepage">
+          <img src="logo.png" class="brand-logo-img" alt="Resilience Network Insignia">
+          <div class="brand-meta">
+            <span class="brand-title">Resilience Network</span>
+            <span class="brand-subtitle">Protocol Research &amp; Synthesis</span>
+          </div>
+        </a>
+
+        <nav class="nav-meta-links" aria-label="Primary">
+          <a href="protocol.html" class="nav-link">Protocol</a>
+          <a href="research.html" class="nav-link">Research</a>
+          <a href="status.html" class="nav-link" aria-current="page">Status</a>
+          <a href="decisions.html" class="nav-link">Decisions</a>
+          <a href="get-started.html" class="nav-link">Get Started</a>
+          <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub&nbsp;↗</a>
+          <div class="status-indicator">
+            <span class="status-pulse"></span>
+            <span>Pre-Mainnet Epoch 0</span>
+          </div>
+        </nav>
+
+        <button class="nav-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Toggle navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Primary mobile">
+      <a href="protocol.html" class="nav-link">Protocol</a>
+      <a href="research.html" class="nav-link">Research</a>
+      <a href="status.html" class="nav-link" aria-current="page">Status</a>
+      <a href="decisions.html" class="nav-link">Decisions</a>
+      <a href="get-started.html" class="nav-link">Get Started</a>
+      <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <div class="status-indicator">
+        <span class="status-pulse"></span>
+        <span>Pre-Mainnet Epoch 0</span>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-hero">
+      <div class="hero-eyebrow">// STATUS &amp; ROADMAP</div>
+      <h1 class="page-title">Nothing <em>hidden</em>.</h1>
+      <p class="page-abstract">
+        Implemented is not the same as activated; activated is not the same as production-qualified. This page separates those three states explicitly, lists the current hard limits, and tracks the milestones toward mainnet gates. <strong>GitHub issues own scope, priority and work status</strong> — this page summarizes them.
+      </p>
+    </section>
+
+    <!-- Capability matrix -->
+    <section class="section" id="capabilities">
+      <div class="section-header">
+        <h2 class="section-title">Capability Matrix</h2>
+        <span class="section-index">Source: docs/reference/features.md</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Feature Family</th>
+              <th scope="col">State</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Transparent RSC + EVM execution</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Transaction V2 actions, metered execution, receipts, Ethereum-style RPC surface</td>
+            </tr>
+            <tr>
+              <td>EIP-1559-style fees (FR-002)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Base fee, fee/tip caps, burn and proposer tip accounting</td>
+            </tr>
+            <tr>
+              <td>Sponsored transactions (FR-004)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Bounded V2 sponsorship with a separate payer witness and nonce</td>
+            </tr>
+            <tr>
+              <td>Session authorization</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Revocable policy-constrained grants, ROOT/DIRECT/SESSION authority, budgets</td>
+            </tr>
+            <tr>
+              <td>P-256 precompile + session keys (FR-013)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Verification precompile and SESSION keys; WebAuthn composition is separate</td>
+            </tr>
+            <tr>
+              <td>Guardian recovery (FR-012)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Opt-in quorum and delayed authority replacement</td>
+            </tr>
+            <tr>
+              <td>Native names (FR-015)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Commit/reveal registration, renewal, transfer, reverse resolution</td>
+            </tr>
+            <tr>
+              <td>Secret leader election</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Verifiable ECVRF claims; private 1-slot lookahead</td>
+            </tr>
+            <tr>
+              <td>Durable consensus locks</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Persisted lock/certificate rules across restarts</td>
+            </tr>
+            <tr>
+              <td>Transferable delegation shares (FR-007)</td>
+              <td><span class="badge badge-blue">Implemented</span></td>
+              <td>Validator-specific shares, read-only vault query surface</td>
+            </tr>
+            <tr>
+              <td>2-second slots (FR-009)</td>
+              <td><span class="badge badge-blue">Config default</span></td>
+              <td>Tuning default — not a universal sub-2-second finality guarantee</td>
+            </tr>
+            <tr>
+              <td>Native Orchard shielded transfers</td>
+              <td><span class="badge badge-gold">Experimental</span></td>
+              <td>Deposits, private transfers, withdrawals, consensus verification — native build + explicit acknowledgment required</td>
+            </tr>
+            <tr>
+              <td>Selective disclosure (FR-001)</td>
+              <td><span class="badge badge-gold">Experimental</span></td>
+              <td>Viewing keys, watch-only sync, accounting export, outgoing recovery, receipts</td>
+            </tr>
+            <tr>
+              <td>Unbiasable randomness beacon</td>
+              <td><span class="badge badge-gray">Proposed</span></td>
+              <td>Threshold-reconstruction prototype delivered; FR-006 EVM randomness precompile stays blocked on it</td>
+            </tr>
+            <tr>
+              <td>Note encryption at rest</td>
+              <td><span class="badge badge-gray">Planned</span></td>
+              <td>v1.0 mainnet gate</td>
+            </tr>
+            <tr>
+              <td>Incremental Merkle witnesses</td>
+              <td><span class="badge badge-gray">Planned</span></td>
+              <td>v1.0 mainnet gate</td>
+            </tr>
+            <tr>
+              <td>Independent external audit</td>
+              <td><span class="badge badge-gray">Planned</span></td>
+              <td>v1.0 mainnet gate — cryptographic qualification is a release requirement</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">MIRROR OF docs/reference/features.md — THE REPOSITORY FILE IS CANONICAL</p>
+    </section>
+
+    <!-- Known limits -->
+    <section class="section" id="limits">
+      <div class="section-header">
+        <h2 class="section-title">Known Limits</h2>
+        <span class="section-index">Current honest constraints</span>
+      </div>
+      <div class="prose">
+        <div class="callout" role="note">
+          <div class="callout-label">// LIMIT 01 — CONSENSUS LIVENESS UNDER LOAD</div>
+          <p>Sustained throughput is capped at <strong>≤20 TPS</strong> (mixed transfers/calls) until the finality-halt failure tracked in <a href="https://github.com/Resilience-Network/Chain/issues/210" target="_blank" rel="noopener noreferrer">issue #210</a> is root-caused and fixed. See the <a href="research.html#load-qualification">load qualification</a> for the full cliff profile.</p>
+        </div>
+        <div class="callout" role="note">
+          <div class="callout-label">// LIMIT 02 — SHIELDED ACTIVITY IS EXPERIMENTAL</div>
+          <p>Orchard shielded transfers require a native cgo build with the Rust cryptography statically linked, an explicit experimental acknowledgment, and a trusted RPC for wallet scanning. Bulk historical sync is hash-bound. Builds with <span class="mono">CGO_ENABLED=0</span> cannot process shielded activity at all.</p>
+        </div>
+        <div class="callout" role="note">
+          <div class="callout-label">// LIMIT 03 — PRE-MAINNET SOFTWARE</div>
+          <p>There is no mainnet. Development geneses (chain 1337) must match across participating nodes; protocol commitments change with the protocol. No result on this site is a release certification.</p>
+        </div>
+        <div class="callout" role="note">
+          <div class="callout-label">// LIMIT 04 — NO EXTERNAL QUALIFICATION YET</div>
+          <p>Independent external cryptographic qualification has not happened. It remains a hard release gate — which is exactly why it is listed here instead of implied away.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section" id="roadmap">
+      <div class="section-header">
+        <h2 class="section-title">Milestone Roadmap</h2>
+        <span class="section-index">GitHub milestones · as of 2026-09-24</span>
+      </div>
+
+      <div class="mini-card-grid mini-card-grid-2">
+        <div class="mini-card">
+          <div class="mini-card-num">M-01 // CURRENT</div>
+          <div class="mini-card-heading">v0.8 — Testnet Stability</div>
+          <div class="milestone-meta">
+            <span>125 / 142 ISSUES CLOSED</span>
+            <span>88%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width: 88%;"></div></div>
+          <p class="mini-card-desc" style="margin-top: 12px;">Immediate bug fixes, unblocking user stories 51–56, and live testnet stability.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/milestone/1" target="_blank" rel="noopener noreferrer">OPEN MILESTONE ↗</a>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-card-num">M-02 // TOOLING</div>
+          <div class="mini-card-heading">v0.9 — RPC &amp; Tooling</div>
+          <div class="milestone-meta">
+            <span>29 / 30 ISSUES CLOSED</span>
+            <span>97%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width: 97%;"></div></div>
+          <p class="mini-card-desc" style="margin-top: 12px;">JSON-RPC parity (WebSocket logs), Docker native crypto build, Prometheus metrics, and Web SDK helpers.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/milestone/2" target="_blank" rel="noopener noreferrer">OPEN MILESTONE ↗</a>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-card-num">M-03 // RELEASE GATES</div>
+          <div class="mini-card-heading">v1.0 — Mainnet Gates</div>
+          <div class="milestone-meta">
+            <span>12 / 27 ISSUES CLOSED</span>
+            <span>44%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill gold" style="width: 44%;"></div></div>
+          <p class="mini-card-desc" style="margin-top: 12px;">Independent external audit, sub-2s finality calibration, incremental Merkle witnesses, note encryption at rest.</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/milestone/3" target="_blank" rel="noopener noreferrer">OPEN MILESTONE ↗</a>
+        </div>
+
+        <div class="mini-card">
+          <div class="mini-card-num">M-04 // POST-GENESIS</div>
+          <div class="mini-card-heading">v2.0 — Roadmap Features</div>
+          <div class="milestone-meta">
+            <span>6 / 14 ISSUES CLOSED</span>
+            <span>43%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill gold" style="width: 43%;"></div></div>
+          <p class="mini-card-desc" style="margin-top: 12px;">Post-genesis consensus feature requests (FR-003, FR-004, FR-007, FR-008, FR-012, FR-014).</p>
+          <a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/milestone/4" target="_blank" rel="noopener noreferrer">OPEN MILESTONE ↗</a>
+        </div>
+      </div>
+      <p class="footnote">COUNTS FROM GITHUB MILESTONES ON 2026-09-24 — LIVE DATA AT github.com/Resilience-Network/Chain/milestones</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-col-brand">
+          <div class="brand-title">Resilience Network Research</div>
+          <p class="footer-note">
+            An open-source, peer-reviewed distributed ledger exploring the intersection of zero-knowledge cryptography, Byzantine fault tolerance, and developer sovereignty.
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div>
+            <div class="footer-col-title">Site</div>
+            <ul class="footer-list">
+              <li><a href="protocol.html">Protocol Specification</a></li>
+              <li><a href="research.html">Research &amp; Assurance</a></li>
+              <li><a href="status.html">Status &amp; Roadmap</a></li>
+              <li><a href="decisions.html">Design Decisions</a></li>
+              <li><a href="get-started.html">Get Started</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Repositories</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain" target="_blank" rel="noopener noreferrer">Chain Core (Go)</a></li>
+              <li><a href="https://github.com/Resilience-Network/ResilienceNetwork.xyz" target="_blank" rel="noopener noreferrer">Web Portal</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/reference" target="_blank" rel="noopener noreferrer">Reference Vectors</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Documentation</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">Architecture Overview</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">Shielded State Specification</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/reference/rpc.md" target="_blank" rel="noopener noreferrer">JSON-RPC Methods</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Assurance</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">Security Index</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribution Guidelines</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 Resilience Network Research Foundation. All rights reserved.</span>
+        <span>Formal Verification · Proof-of-Stake · Orchard Privacy</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const toggle = document.querySelector('.nav-toggle');
+      const menu = document.getElementById('mobile-nav');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    })();
+  </script>
+</body>
+</html>

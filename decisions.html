@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Decisions — Resilience Network</title>
+  <meta name="description" content="Architecture decision records for Resilience Network: the unbiasable randomness beacon requirement and the session authorization V1 consensus rules, with full rationale.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Resilience Network">
+  <meta property="og:title" content="Design Decisions — Resilience Network">
+  <meta property="og:description" content="Architecture decision records: why the randomness beacon must be unbiasable, and the consensus rules behind session authorization.">
+  <meta property="og:url" content="https://resiliencenetwork.xyz/decisions.html">
+  <meta property="og:image" content="https://resiliencenetwork.xyz/logo.png">
+  <meta name="twitter:card" content="summary">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="brand-identity" aria-label="Resilience Network Research Homepage">
+          <img src="logo.png" class="brand-logo-img" alt="Resilience Network Insignia">
+          <div class="brand-meta">
+            <span class="brand-title">Resilience Network</span>
+            <span class="brand-subtitle">Protocol Research &amp; Synthesis</span>
+          </div>
+        </a>
+
+        <nav class="nav-meta-links" aria-label="Primary">
+          <a href="protocol.html" class="nav-link">Protocol</a>
+          <a href="research.html" class="nav-link">Research</a>
+          <a href="status.html" class="nav-link">Status</a>
+          <a href="decisions.html" class="nav-link" aria-current="page">Decisions</a>
+          <a href="get-started.html" class="nav-link">Get Started</a>
+          <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub&nbsp;↗</a>
+          <div class="status-indicator">
+            <span class="status-pulse"></span>
+            <span>Pre-Mainnet Epoch 0</span>
+          </div>
+        </nav>
+
+        <button class="nav-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Toggle navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Primary mobile">
+      <a href="protocol.html" class="nav-link">Protocol</a>
+      <a href="research.html" class="nav-link">Research</a>
+      <a href="status.html" class="nav-link">Status</a>
+      <a href="decisions.html" class="nav-link" aria-current="page">Decisions</a>
+      <a href="get-started.html" class="nav-link">Get Started</a>
+      <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <div class="status-indicator">
+        <span class="status-pulse"></span>
+        <span>Pre-Mainnet Epoch 0</span>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-hero">
+      <div class="hero-eyebrow">// ARCHITECTURE DECISION RECORDS</div>
+      <h1 class="page-title">Decisions with the <em>reasoning</em> attached.</h1>
+      <p class="page-abstract">
+        Protocols are the sum of the trade-offs their teams accept. These records preserve the <strong>why</strong> behind two consequential design choices — in full, with status, so you can disagree with the argument rather than guess at it. Canonical copies live in <span class="mono">docs/decisions/</span>.
+      </p>
+    </section>
+
+    <!-- ADR 01 -->
+    <section class="section" id="adr-unbiasable-beacon">
+      <div class="section-header">
+        <h2 class="section-title">Unbiasable Randomness Beacon</h2>
+        <span class="section-index">ADR-01 · Proposed</span>
+      </div>
+      <div class="prose">
+        <p class="footnote" style="margin-top: 0;">STATUS: PROPOSED (THRESHOLD RECONSTRUCTION PROTOTYPE) · DATE: 2026-09-17 · ISSUE #33 · PR #204</p>
+        <h3>Context</h3>
+        <p>
+          Secret leader election replaced the public one-slot-lookahead schedule: each validator privately evaluates an RFC 9381 ECVRF over the view, and the winner's output doubles as the next block's randomness beacon. That closes proposer-targeted denial of service — nobody knows whom to attack in advance — but it leaves the beacon itself <strong>biasable</strong>.
+        </p>
+        <p>
+          A byzantine winner sees its own output before publishing. If the outcome is unfavorable, it can simply withhold the block and advance the protocol to a fresh view with a fresh randomness draw. One such retry turns a fair contract-visible coin into a <strong>three-quarters coin</strong> — cheaply, silently, and without slashing a single signature.
+        </p>
+        <h3>Decision</h3>
+        <p>
+          Contract-visible randomness stays <strong>blocked</strong> until the beacon is unbiasable. The FR-006 EVM randomness precompile does not ship on a biasable source, because exposing one would enshrine proposer advantage into lotteries, airdrops and fair sampling — bugs that can never be patched out of deployed contracts.
+        </p>
+        <p>
+          The proposed design is distributed beacon output via <strong>threshold reconstruction</strong> (Shamir-style sharing among validators), with an adversarial simulation demonstrating that no validator — including the proposer — can bias the output. A prototype with byzantine simulation tests is delivered; consensus wiring is deliberately held back until the design lane settles.
+        </p>
+        <h3>Consequences</h3>
+        <ul>
+          <li>Contracts get no on-chain randomness until the property is proven, not promised</li>
+          <li>The beacon becomes a consensus-critical component with its own threat surface</li>
+          <li>Governance gains a genuinely fair source for future protocol lotteries</li>
+        </ul>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/decisions/unbiasable-randomness-beacon.md" target="_blank" rel="noopener noreferrer">READ THE FULL RECORD ↗</a></p>
+      </div>
+    </section>
+
+    <!-- ADR 02 -->
+    <section class="section" id="adr-session-authorization">
+      <div class="section-header">
+        <h2 class="section-title">Session Authorization V1</h2>
+        <span class="section-index">ADR-02 · Candidate</span>
+      </div>
+      <div class="prose">
+        <p class="footnote" style="margin-top: 0;">STATUS: CANDIDATE FOR EXECUTABLE VALIDATION — NOT APPROVED FOR PRODUCTION</p>
+        <h3>Context</h3>
+        <p>
+          Session authorization lets an account delegate narrow, revocable powers to ephemeral keys. It is the protocol's answer to key management — the layer where most real-world losses happen — so its consensus rules cannot be informal. The record fixes <strong>one unambiguous candidate behavior</strong> so that independent implementations, test vectors, benchmarks and audits can all target the same protocol instead of their own interpretation of it.
+        </p>
+        <h3>Decision principles</h3>
+        <ul>
+          <li>Authorization must be <strong>deterministic, bounded, non-programmable, and consensus-visible</strong> — no general computation hiding inside a grant</li>
+          <li>No field may acquire meaning from an implementation default — every value is explicit on the wire</li>
+          <li>Consensus parsing accepts <strong>exactly one encoding</strong> for one value</li>
+          <li>Worst-case work must be <strong>chargeable before expensive work begins</strong> — no un-metered amplification</li>
+          <li>Root recovery must not depend on an active or honest session — the escape hatch cannot be held hostage by the thing it escapes</li>
+        </ul>
+        <h3>Consequences</h3>
+        <ul>
+          <li>Numeric resource and economic parameters remain candidate network parameters until the validation gates pass</li>
+          <li>A mainnet release must copy accepted values into genesis or upgrade configuration and bind them into the protocol-version commitment</li>
+          <li>Wallets and auditors get a single, testable target for the V1 surface</li>
+        </ul>
+        <p><a class="mini-card-link" href="https://github.com/Resilience-Network/Chain/blob/main/docs/decisions/session-authorization.md" target="_blank" rel="noopener noreferrer">READ THE FULL RECORD ↗</a></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="callout" role="note">
+        <div class="callout-label">// WHY RECORD DECISIONS AT ALL</div>
+        <p>GitHub issues own scope and priority; current documentation owns supported behavior; decision records own <strong>rationale</strong>. When code and specification disagree, the disagreement is investigated and recorded before protocol behavior changes — these pages are the paper trail of that discipline.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-col-brand">
+          <div class="brand-title">Resilience Network Research</div>
+          <p class="footer-note">
+            An open-source, peer-reviewed distributed ledger exploring the intersection of zero-knowledge cryptography, Byzantine fault tolerance, and developer sovereignty.
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div>
+            <div class="footer-col-title">Site</div>
+            <ul class="footer-list">
+              <li><a href="protocol.html">Protocol Specification</a></li>
+              <li><a href="research.html">Research &amp; Assurance</a></li>
+              <li><a href="status.html">Status &amp; Roadmap</a></li>
+              <li><a href="decisions.html">Design Decisions</a></li>
+              <li><a href="get-started.html">Get Started</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Repositories</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain" target="_blank" rel="noopener noreferrer">Chain Core (Go)</a></li>
+              <li><a href="https://github.com/Resilience-Network/ResilienceNetwork.xyz" target="_blank" rel="noopener noreferrer">Web Portal</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/reference" target="_blank" rel="noopener noreferrer">Reference Vectors</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Documentation</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">Architecture Overview</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">Shielded State Specification</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/docs/reference/rpc.md" target="_blank" rel="noopener noreferrer">JSON-RPC Methods</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Assurance</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">Security Index</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribution Guidelines</a></li>
+              <li><a href="https://github.com/Resilience-Network/Chain/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 Resilience Network Research Foundation. All rights reserved.</span>
+        <span>Formal Verification · Proof-of-Stake · Orchard Privacy</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const toggle = document.querySelector('.nav-toggle');
+      const menu = document.getElementById('mobile-nav');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
