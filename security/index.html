@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reporting a vulnerability | Resilience Network</title>
+<meta name="description" content="How to report a vulnerability in Resilience Network: contact, what to include, scope and how reports are handled.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/security/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Reporting a vulnerability | Resilience Network">
+<meta property="og:description" content="How to report a vulnerability in Resilience Network: contact, what to include, scope and how reports are handled.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/security/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/security/">Security</a></div>
+    
+    <h1>Reporting a vulnerability</h1>
+    <p class="lead">If you find a way to break safety, liveness, authorization, privacy or the accounting of funds in Resilience Network, please tell us privately first.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc no-toc">
+    
+    <article class="prose">
+<section id="contact" data-unnumbered>
+<h2>Contact<a class="anchor" href="#contact" aria-label="Link to this section">#</a></h2>
+<p>Email <a href="mailto:dev.durgeshkhade@gmail.com?subject=SECURITY">dev.durgeshkhade@gmail.com</a> with "SECURITY" in the subject line.</p>
+<p>Include the affected component and, if you know them, the revision or manifest number; steps or a proof of concept and the impact you expect; and whether and when you plan to publish.</p>
+</section>
+
+<section id="scope" data-unnumbered>
+<h2>Scope<a class="anchor" href="#scope" aria-label="Link to this section">#</a></h2>
+<p><strong>In scope:</strong> the protocol as specified on this site, meaning consensus, execution and the EVM, authorization and recovery, shielded transfers, networking and RPC, as well as the command-line client, the SDK and this website.</p>
+<p><strong>Out of scope:</strong> attacks that need more than one third of voting power; social engineering; denial of service against infrastructure we do not operate; and automated scanner output without a demonstrated impact.</p>
+</section>
+
+<section id="handling" data-unnumbered>
+<h2>How reports are handled<a class="anchor" href="#handling" aria-label="Link to this section">#</a></h2>
+<p>We acknowledge the report, confirm the issue, fix it, and credit you if you wish. Details of a finding are published on <a href="/assurance/#reviews">Assurance</a> only after its fix ships. There is no public network and no bug bounty yet; a bounty is one of the <a href="/status/#gates">mainnet release gates</a>.</p>
+<p>A machine-readable contact is published at <a href="/.well-known/security.txt"><code>/.well-known/security.txt</code></a>.</p>
+</section>
+
+
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!--meta
+{"path": "protocol/accounts/", "title": "Accounts and authorization", "nav": "protocol",
+ "h1": "Accounts and authorization",
+ "lead": "On most chains, one private key is the whole account. On Resilience, an account keeps a stable address while its authority can change: a threshold of root keys, expiring session keys bound to a policy, a guardian quorum after a delay. All of it is native protocol evaluated by consensus, with no smart-contract wallet in the path.",
+ "crumbs": [["Protocol", "/protocol/"], ["Accounts", "/protocol/accounts/"]],
+ "badge": "<span class=\"badge b-impl\">Implemented</span>",
+ "description": "Native account authorization on Resilience Network: DIRECT, ROOT and SESSION authority, session grants and policies, revocation ordering, consensus limits, deposits, P-256 passkey sessions, guardian recovery, sponsorship and .rsc names.",
+ "pager": {"prev": ["Execution", "/protocol/execution/"], "next": ["Privacy", "/protocol/privacy/"]},
+ "cite": true,
+ "sources": "Session Authorization Protocol 0.2.0 and its V1 decision record; <code class=\"src\">pkg/sessionauth</code>, <code class=\"src\">pkg/nameservice</code>, <code class=\"src\">internal/state/transition_v2.go</code>, <code class=\"src\">internal/state/recovery.go</code>; session-authorization threat model 0.2.0."}
+-->
+<div class="pull"><p>A valid credential, plus active on-chain authorization, plus every policy constraint satisfied, gives permission for one exact state transition.</p></div>
+
+<section id="modes">
+<h2>Three authority modes</h2>
+<table>
+<thead><tr><th scope="col">Mode</th><th scope="col">Who signs</th><th scope="col">Can do</th><th scope="col">Keys</th></tr></thead>
+<tbody>
+<tr><td>DIRECT</td><td>The single key that derives the address</td><td>Anything, like a conventional account</td><td>Ed25519</td></tr>
+<tr><td>ROOT</td><td>Exactly a threshold of up to 8 root keys</td><td>Anything, including every authorization change</td><td>Ed25519</td></tr>
+<tr><td>SESSION</td><td>One session key under one grant</td><td>Only what the grant's policy allows</td><td>Ed25519 or P-256</td></tr>
+</tbody>
+</table>
+<p>A DIRECT account switches to ROOT mode irreversibly and keeps its address. Contract accounts have no signing authority of their own.</p>
+</section>
+
+<section id="decisions">
+<h2>Four separate decisions</h2>
+<figure class="fig" id="fig-4">
+<div class="frame">
+<svg viewBox="0 0 680 300" role="img" aria-labelledby="fig4-t">
+<title id="fig4-t">Authorization is decided in four steps. Failing any of the first three makes the transaction invalid; failing the fourth produces a failed receipt.</title>
+<defs><marker id="f4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+<marker id="f4r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-r" d="M0 0L10 5L0 10z"/></marker></defs>
+<g><rect class="bx" x="30" y="16" width="300" height="52" rx="7"/><text class="n" x="46" y="38">1</text><text class="t" x="62" y="38">Cryptographic</text><text class="s" x="62" y="57">did the credential sign this exact intent?</text></g>
+<g><rect class="bx" x="30" y="88" width="300" height="52" rx="7"/><text class="n" x="46" y="110">2</text><text class="t" x="62" y="110">Authorization</text><text class="s" x="62" y="129">is it currently authorized for this account?</text></g>
+<g><rect class="bx" x="30" y="160" width="300" height="52" rx="7"/><text class="n" x="46" y="182">3</text><text class="t" x="62" y="182">Policy</text><text class="s" x="62" y="201">is the action inside its authority?</text></g>
+<g><rect class="bx-a" x="30" y="232" width="300" height="52" rx="7"/><text class="n" x="46" y="254">4</text><text class="t" x="62" y="254">Execution</text><text class="s" x="62" y="273">does the action succeed?</text></g>
+<path class="ln" d="M180 68V86" marker-end="url(#f4a)"/><path class="ln" d="M180 140V158" marker-end="url(#f4a)"/><path class="ln" d="M180 212V230" marker-end="url(#f4a)"/>
+<path class="ln-r" d="M330 42H372V186H330"/><path class="ln-r" d="M372 114H402" marker-end="url(#f4r)"/>
+<g><rect class="bx-r" x="404" y="86" width="250" height="56" rx="7"/><text class="t" x="420" y="109">No: transaction is invalid</text><text class="s" x="420" y="128">never included in any block</text></g>
+<path class="ln" d="M330 258H402" marker-end="url(#f4a)"/>
+<g><rect class="bx" x="404" y="226" width="250" height="64" rx="7"/><text class="t" x="420" y="249">Included either way</text><text class="s" x="420" y="267">success, or a failed receipt that</text><text class="s" x="420" y="282">consumes the nonce and actual gas</text></g>
+</svg>
+</div>
+<figcaption><b>Figure 4.</b> The authorization funnel. Steps 1 to 3 decide whether a transaction may be in a block at all; step 4 only decides its receipt.</figcaption>
+</figure>
+</section>
+
+<section id="grants">
+<h2>Session grants and policies</h2>
+<p>A grant is an immutable on-chain record that binds one session public key to one policy, a validity interval in block heights, a private nonce lane, and usage counters. A policy is a conjunction of built-in rules: every enabled rule applies, and none can call contract code, read a clock or reach an external service.</p>
+<table>
+<thead><tr><th scope="col">Policy part</th><th scope="col">Constrains</th></tr></thead>
+<tbody>
+<tr><td>Fee policy, required</td><td>Maximum gas, maximum price, maximum fee per transaction, lifetime fee limit, optional token bucket</td></tr>
+<tr><td>Transfers</td><td>Recipients (a Merkle set), amounts, rate</td></tr>
+<tr><td>Contract calls</td><td>Contracts, method selectors, ABI-head argument constraints, value</td></tr>
+<tr><td>Contract creation</td><td>Allowed creation rules</td></tr>
+<tr><td>Stake, unstake, delegate, claim</td><td>Validators and amounts</td></tr>
+<tr><td>Attempts</td><td>Every authorized attempt counts, including failures and cancellations</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="revocation">
+<h2>Ordering and revocation</h2>
+<p>Every valid block places all control transactions before all user transactions. An included revocation, revoke-all or root rotation therefore takes effect before any session action in the same block, and a new grant cannot act in the block that creates it.</p>
+<p>Revocation takes effect at inclusion and finality. The protocol cannot force a proposer to include it, so wallets broadcast revocations on several paths and show them as pending until finalized. Cancelling a session is not revoking it.</p>
+</section>
+
+<section id="limits">
+<h2>Consensus limits</h2>
+<table class="params">
+<thead><tr><th scope="col">Limit</th><th scope="col">Value</th></tr></thead>
+<tbody>
+<tr><td>Root keys per account</td><td>8</td></tr>
+<tr><td>Active grants per account</td><td>64</td></tr>
+<tr><td>Session lifetime</td><td>432,000 blocks, about 10 days at the 2 s target</td></tr>
+<tr><td>Policy size</td><td>16,384 bytes</td></tr>
+<tr><td>Call rules / creation rules</td><td>64 / 32</td></tr>
+<tr><td>Recipients per rule</td><td>128</td></tr>
+<tr><td>Argument constraints per call rule</td><td>32</td></tr>
+<tr><td>Authorization witness</td><td>1,098 bytes</td></tr>
+<tr><td>Authorization writes per transaction / per block</td><td>16 / 4,096</td></tr>
+</tbody>
+</table>
+<p>A transaction over any limit is invalid, not merely out of gas. Authorization gas is charged per attempted signature, trie operation, policy rule, constraint and inspected byte, before expensive work starts. These constants are candidates until measured on the minimum supported validator hardware.</p>
+</section>
+
+<section id="deposits">
+<h2>Deposits and the security reserve</h2>
+<ul>
+<li><strong>Grant deposit:</strong> the larger of 1 RSC and 0.0001 RSC per stored byte, locked in the grant. An explicit revocation refunds all of it. Anyone may clean up an expired grant and earn 2%; the owner receives the other 98%.</li>
+<li><strong>Security reserve:</strong> while any grant is active, sessions must leave at least the reserve untouched (minimum 0.1 RSC). Only ROOT can spend it, so the owner can always afford an emergency revocation.</li>
+</ul>
+</section>
+
+<section id="passkeys">
+<h2>P-256 passkey sessions</h2>
+<p>Session grants accept P-256 keys (scheme 0x02): 64-byte X‖Y public keys and raw 64-byte r‖s signatures over the unchanged session digest. Browser passkeys and secure enclaves can therefore hold session keys. The chain verifies raw ECDSA only; wallets must validate the WebAuthn ceremony themselves. DIRECT, ROOT, validator and network keys remain Ed25519.</p>
+</section>
+
+<section id="recovery">
+<h2>Guardian recovery</h2>
+<p>A ROOT account may enroll up to three guardians with a threshold. When guardians reach quorum on a replacement Ed25519 root key, the replacement is frozen and two clocks start: 100,800 blocks <em>and</em> 604,800 seconds, which is seven days. Finalization is allowed only after both. Faster slots do not shorten the seven days.</p>
+<figure class="fig" id="fig-5">
+<div class="frame">
+<svg viewBox="0 0 680 210" role="img" aria-labelledby="fig5-t">
+<title id="fig5-t">Recovery timeline: enroll, guardian votes, quorum freezes the replacement, both delays elapse, finalize. The owner can cancel until finalization.</title>
+<defs><marker id="f5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<path class="ln" d="M20 120H660" marker-end="url(#f5a)"/>
+<g><circle cx="50" cy="120" r="7" fill="#fff" stroke="#3d4763" stroke-width="1.5"/><text class="t" x="50" y="152" text-anchor="middle">Enroll</text><text class="s" x="50" y="170" text-anchor="middle">owner, in advance</text></g>
+<g><circle cx="165" cy="120" r="7" fill="#fff" stroke="#3d4763" stroke-width="1.5"/><text class="t" x="165" y="152" text-anchor="middle">Votes</text><text class="s" x="165" y="170" text-anchor="middle">guardians</text></g>
+<g><circle cx="270" cy="120" r="8" fill="#002fa6"/><text class="t" x="270" y="152" text-anchor="middle">Quorum</text><text class="s" x="270" y="170" text-anchor="middle">replacement frozen</text></g>
+<rect class="bx-g" x="282" y="104" width="306" height="32" rx="5"/>
+<text class="tn" x="435" y="125" text-anchor="middle">100,800 blocks and 604,800 s</text>
+<g><circle cx="610" cy="120" r="8" fill="#1d6b40"/><text class="t" x="610" y="152" text-anchor="middle">Finalize</text><text class="s" x="610" y="170" text-anchor="middle">after both</text></g>
+<path class="ln" d="M270 62V56H588V62"/>
+<text class="tn" x="429" y="46" text-anchor="middle">Owner can cancel at any time</text>
+<text class="s" x="429" y="80" text-anchor="middle">cancellations are ordered before finalizations</text>
+</svg>
+</div>
+<figcaption><b>Figure 5.</b> Recovery is slow on purpose. At the 2 s target, the block delay is about 2.3 days, so the seven-day clock is the one that binds. Not to scale.</figcaption>
+</figure>
+<ul>
+<li>Finalization replaces authority atomically, invalidates all sessions, and keeps the address, balances, stake, names and deposits.</li>
+<li>Guardians never gain spending authority before finalization. A guardian quorum can take over an enrolled account whose owner fails to cancel, so owners must watch recovery state and keep enough funds to cancel.</li>
+<li>A lost root key cannot be rescued without prior enrollment. Sessions cannot configure, vote, cancel or finalize recovery.</li>
+</ul>
+</section>
+
+<section id="sponsorship">
+<h2>Sponsored transactions</h2>
+<p>A separate DIRECT account can pay gas for a DIRECT or ROOT sender. The sponsor signs with its own nonce and its own domain, <code>RESILIENCE_SPONSOR_AUTH_V1</code>, and funds the maximum gas; the sender still authorizes the action and funds any value it moves. Sessions cannot be sponsored, self-sponsorship is rejected, and sponsorship pays in RSC only. It is not an ERC-4337 entry point.</p>
+</section>
+
+<section id="names">
+<h2>Names</h2>
+<p>Names end in <code>.rsc</code> and are 1 to 63 lowercase ASCII letters, digits and interior hyphens. Registration uses commit and reveal, so a name is never published before its owner has committed to it.</p>
+<table class="params">
+<thead><tr><th scope="col">Label length</th><th scope="col" class="num">Registration burn</th></tr></thead>
+<tbody>
+<tr><td>1 character</td><td class="num">500 RSC</td></tr>
+<tr><td>2 characters</td><td class="num">200 RSC</td></tr>
+<tr><td>3 characters</td><td class="num">100 RSC</td></tr>
+<tr><td>4 characters</td><td class="num">50 RSC</td></tr>
+<tr><td>5 to 9 characters</td><td class="num">10 RSC</td></tr>
+<tr><td>10 or more</td><td class="num">5 RSC</td></tr>
+</tbody>
+</table>
+<p>Renewal costs half the registration burn, and a commit burns 0.1 RSC. The reveal delay is 3 blocks, a commit times out after 43,200 blocks, a registration lasts 5,256,000 blocks (about 122 days at the 2 s target), and the grace period is 438,000 blocks. Expired names stop resolving. Policies should pin a resolved address, never a name, so a later name change cannot widen authority.</p>
+</section>

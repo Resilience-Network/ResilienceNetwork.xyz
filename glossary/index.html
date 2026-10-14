@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary | Resilience Network</title>
+<meta name="description" content="Definitions of the consensus, authorization and privacy terms used on the Resilience Network site.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/glossary/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Glossary | Resilience Network">
+<meta property="og:description" content="Definitions of the consensus, authorization and privacy terms used on the Resilience Network site.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/glossary/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/glossary/">Glossary</a></div>
+    
+    <h1>Glossary</h1>
+    <p class="lead">Terms as this site uses them.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc no-toc">
+    
+    <article class="prose">
+<section id="terms" data-unnumbered>
+<h2>Terms<a class="anchor" href="#terms" aria-label="Link to this section">#</a></h2>
+<dl class="terms">
+<div id="anchor"><dt>Anchor (peers)</dt><dd>A configured bootstrap peer treated as a trust root for connectivity. Protected from pruning and watched for eclipse.</dd></div>
+<div id="anchor-shielded"><dt>Anchor (shielded)</dt><dd>A recent root of the note-commitment tree that a spend proves membership against.</dd></div>
+<div id="base-fee"><dt>Base fee</dt><dd>The per-gas price the protocol sets from the parent block's utilization. Burned.</dd></div>
+<div id="certificate"><dt>Certificate</dt><dd>Signatures from validators holding more than two thirds of voting power, for one block in one view.</dd></div>
+<div id="compact-block"><dt>Compact block</dt><dd>A scan-only summary of a block's shielded data, which a wallet authenticates against the block header.</dd></div>
+<div id="control"><dt>Control transaction</dt><dd>An authorization change: grant, revoke, rotate root, set reserve. Ordered before user transactions in every block.</dd></div>
+<div id="modes"><dt>DIRECT, ROOT, SESSION</dt><dd>The three authority modes: one address key, a threshold of root keys, or a policy-bound session key.</dd></div>
+<div id="epoch"><dt>Epoch</dt><dd>192 slots by default. Validator sets and rewards change at epoch boundaries.</dd></div>
+<div id="equivocation"><dt>Equivocation</dt><dd>A validator signing two conflicting messages for the same view. Slashable.</dd></div>
+<div id="grant"><dt>Grant</dt><dd>An on-chain record that authorizes one session key under one policy for a range of block heights.</dd></div>
+<div id="lock"><dt>Lock</dt><dd>A validator's durable commitment to a block it precommitted. Survives restarts and is released only by a newer certificate.</dd></div>
+<div id="manifest"><dt>Manifest and commitment</dt><dd>The canonical list of consensus constants, and its Keccak-256 hash written into genesis.</dd></div>
+<div id="nullifier"><dt>Nullifier</dt><dd>A unique tag published when a shielded note is spent. A repeated nullifier is a double spend.</dd></div>
+<div id="policy"><dt>Policy</dt><dd>The built-in rules a session's actions must satisfy. It never executes contract code.</dd></div>
+<div id="reserve"><dt>Security reserve</dt><dd>Balance that sessions cannot touch, kept for emergency root actions.</dd></div>
+<div id="slot"><dt>Slot, round, view</dt><dd>A slot is a 2 s timing unit with up to 3 rounds; a view is a (slot, round) pair.</dd></div>
+<div id="turnstile"><dt>Turnstile</dt><dd>The public accounting of value entering and leaving the shielded pool.</dd></div>
+<div id="vrf"><dt>VRF</dt><dd>Verifiable random function: each validator's private lottery for proposing, with a public proof.</dd></div>
+<div id="watermark"><dt>Watermark</dt><dd>A persisted record of the highest view a validator has signed, used to refuse anything conflicting or older.</dd></div>
+</dl>
+</section>
+
+
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

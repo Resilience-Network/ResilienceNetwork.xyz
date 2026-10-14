@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protocol overview | Resilience Network</title>
+<meta name="description" content="How a Resilience Network transaction moves from signature to finalized receipt, the invariants every change must preserve, the protocol commitment, and the cryptographic primitives in use.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/protocol/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Protocol overview | Resilience Network">
+<meta property="og:description" content="How a Resilience Network transaction moves from signature to finalized receipt, the invariants every change must preserve, the protocol commitment, and the cryptographic primitives in use.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/protocol/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/" class="is-section">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/protocol/">Protocol</a></div>
+    
+    <h1>Protocol overview</h1>
+    <p class="lead">A transaction crosses seven boundaries between a signature and a finalized receipt. Each boundary has one owner in the implementation and one rule it must never break. The five specification pages that follow go into each one.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#lifecycle"><span class="n">§1</span><span>A transaction&#x27;s path</span></a></li><li><a href="#invariants"><span class="n">§2</span><span>Invariants every change must preserve</span></a></li><li><a href="#commitment"><span class="n">§3</span><span>The protocol commitment</span></a></li><li><a href="#primitives"><span class="n">§4</span><span>Cryptographic primitives</span></a></li><li><a href="#components"><span class="n">§5</span><span>Component map</span></a></li></ol><div class="pager"><a href="/protocol/consensus/">Next: Consensus</a></div></nav>
+    <article class="prose">
+<section id="lifecycle">
+<h2><span class="n">§1</span>A transaction's path<a class="anchor" href="#lifecycle" aria-label="Link to this section">#</a></h2>
+
+<figure class="fig" id="fig-1">
+<div class="frame">
+<svg viewBox="0 0 680 352" role="img" aria-labelledby="fig1-t">
+<title id="fig1-t">Transaction lifecycle: sign, submit, admit, propose, execute, finalize, observe; a syncing node re-executes finalized blocks through the importer.</title>
+<defs><marker id="f1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+<marker id="f1q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-q" d="M0 0L10 5L0 10z"/></marker></defs>
+<g><rect class="bx" x="10" y="24" width="146" height="62" rx="7"/><text class="n" x="24" y="48">1</text><text class="t" x="40" y="48">Sign</text><text class="s" x="24" y="70">client, V2 envelope</text></g>
+<g><rect class="bx" x="182" y="24" width="146" height="62" rx="7"/><text class="n" x="196" y="48">2</text><text class="t" x="212" y="48">Submit</text><text class="s" x="196" y="70">RPC or gossip</text></g>
+<g><rect class="bx" x="354" y="24" width="146" height="62" rx="7"/><text class="n" x="368" y="48">3</text><text class="t" x="384" y="48">Admit</text><text class="s" x="368" y="70">transaction pool</text></g>
+<g><rect class="bx" x="526" y="24" width="146" height="62" rx="7"/><text class="n" x="540" y="48">4</text><text class="t" x="556" y="48">Propose</text><text class="s" x="540" y="70">elected proposer</text></g>
+<g><rect class="bx" x="526" y="150" width="146" height="62" rx="7"/><text class="n" x="540" y="174">5</text><text class="t" x="556" y="174">Execute</text><text class="s" x="540" y="196">every validator, strictly</text></g>
+<g><rect class="bx-a" x="354" y="150" width="146" height="62" rx="7"/><text class="n" x="368" y="174">6</text><text class="t" x="384" y="174">Finalize</text><text class="s" x="368" y="196">&gt;2/3 precommit</text></g>
+<g><rect class="bx" x="182" y="150" width="146" height="62" rx="7"/><text class="n" x="196" y="174">7</text><text class="t" x="212" y="174">Observe</text><text class="s" x="196" y="196">RPC, wallets</text></g>
+<g><path class="ln" d="M156 55H180" marker-end="url(#f1a)"/><path class="ln" d="M328 55H352" marker-end="url(#f1a)"/><path class="ln" d="M500 55H524" marker-end="url(#f1a)"/><path class="ln" d="M599 86V148" marker-end="url(#f1a)"/><path class="ln" d="M526 181H502" marker-end="url(#f1a)"/><path class="ln" d="M354 181H330" marker-end="url(#f1a)"/></g>
+<text class="s" x="368" y="110">admission is not inclusion</text>
+<text class="s" x="610" y="122">whole block</text>
+<g><rect class="bx-q" x="354" y="272" width="318" height="62" rx="7"/><text class="t" x="370" y="298">Syncing node</text><text class="s" x="370" y="320">finalized-block importer re-executes with the same rules</text></g>
+<path class="ln-q" d="M599 272V214" marker-end="url(#f1q)"/>
+<text class="s" x="610" y="246">must match</text>
+</svg>
+</div>
+<figcaption><b>Figure 1.</b> The seven boundaries. A syncing node never takes a peer's word for state: it re-executes finalized blocks and must reproduce live execution exactly, including fees, epoch transitions and validator sets.</figcaption>
+</figure>
+
+<ol>
+<li><strong>Sign.</strong> The client serializes a canonical V2 envelope and signs it, bound to the chain and genesis.</li>
+<li><strong>Submit.</strong> RPC or gossip decodes it and offers it to the transaction pool.</li>
+<li><strong>Admit.</strong> Pool checks, repeated on every head change, decide eligibility. Admission is not a promise of inclusion.</li>
+<li><strong>Propose.</strong> The elected proposer orders candidates and simulates them within block budgets.</li>
+<li><strong>Execute.</strong> Validators authenticate the proposal and execute the whole block strictly. An invalid transaction invalidates the block; a valid action that fails produces a failed receipt.</li>
+<li><strong>Finalize.</strong> Validators holding more than two thirds of voting power precommit. The commit persists blocks, receipts, state and validator data together.</li>
+<li><strong>Observe.</strong> RPC exposes the canonical result. Shielded wallets rebuild their state from authenticated compact blocks.</li>
+</ol>
+</section>
+
+<section id="invariants">
+<h2><span class="n">§2</span>Invariants every change must preserve<a class="anchor" href="#invariants" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Identity is more than a chain ID.</strong> Genesis, effective consensus configuration and the protocol commitment together identify a network.</li>
+<li><strong>Execution is deterministic.</strong> Proposer selection never replaces strict execution by every validator.</li>
+<li><strong>Invalid input never partially commits.</strong> A valid transaction that fails follows receipt, fee and nonce rules instead.</li>
+<li><strong>Safety state survives restarts.</strong> Validator locks and signing watermarks persist. Running a duplicate signer or resetting them defeats safety.</li>
+<li><strong>Consensus changes move together.</strong> Encodings, gas schedules, activation rules and state-root commitments are reviewed as one change.</li>
+<li><strong>Advice is not finality.</strong> An RPC simulation, a unit test or a past review result is never evidence of inclusion or of deployment readiness.</li>
+</ul>
+</section>
+
+<section id="commitment">
+<h2><span class="n">§3</span>The protocol commitment<a class="anchor" href="#commitment" aria-label="Link to this section">#</a></h2>
+<p>Protocol rules are pinned in a compiled protocol manifest: domain strings, gas prices, action codes, activation revisions and size limits. The manifest is encoded canonically, with each constant's name next to its value, and hashed with Keccak-256. That hash is written into the genesis header together with the chain ID. Timing and economic parameters, such as slot duration, epoch length, stake and slashing, are bound separately by each node's consensus-configuration commitment, and nodes with different values do not interoperate.</p>
+<p>A node refuses a genesis whose commitment differs from the one it was built with. There is no migration between manifest revisions: a semantic change means a coordinated restart from a fresh genesis. The <a href="/log/">log</a> lists every revision.</p>
+<div class="table-wrap"><table class="params">
+<caption>Current values</caption>
+<thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+<tbody>
+<tr><td>Manifest revision</td><td>28</td></tr>
+<tr><td>Protocol identifier</td><td><code>resilience/session-authorization/1</code></td></tr>
+<tr><td>Capability</td><td><code>resilience/tx-auth/2</code></td></tr>
+<tr><td>Hash function</td><td>Keccak-256 with original padding (not NIST SHA3-256)</td></tr>
+<tr><td>Development genesis commitment</td><td><code>0xcb4f7146ea76f23d2dbf1b5ba6087690f216a2be25e09270195efa27cbfffa8a</code></td></tr>
+<tr><td>Development chain ID</td><td>1337, replaced at a public genesis</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="primitives">
+<h2><span class="n">§4</span>Cryptographic primitives<a class="anchor" href="#primitives" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Use</th><th scope="col">Primitive</th></tr></thead>
+<tbody>
+<tr><td>Hashing, state, signing domains</td><td>Keccak-256 (original padding), one literal domain label per construction</td></tr>
+<tr><td>Account, root, validator and network keys</td><td>Ed25519 (RFC 8032), canonical encodings only</td></tr>
+<tr><td>Session keys, optionally</td><td>P-256 (secp256r1) ECDSA, raw 64-byte r&#8214;s signatures</td></tr>
+<tr><td>Leader election and randomness</td><td>ECVRF-EDWARDS25519-SHA512-TAI (RFC 9381, suite 0x03)</td></tr>
+<tr><td>Shielded transfers</td><td>Orchard: Halo 2 proofs on the Pallas/Vesta curve cycle, RedPallas signatures</td></tr>
+<tr><td>Validator keystore</td><td>scrypt with AES-256-GCM</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="components">
+<h2><span class="n">§5</span>Component map<a class="anchor" href="#components" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Area</th><th scope="col">Responsibility</th><th scope="col">Where</th></tr></thead>
+<tbody>
+<tr><td><a href="/protocol/consensus/">Consensus</a></td><td>Proposals, votes, locks, leader election, finalized import</td><td><code class="src">internal/consensus</code>, <code class="src">internal/blockchain</code>, <code class="src">crypto</code></td></tr>
+<tr><td><a href="/protocol/execution/">Execution</a></td><td>State transition, EVM, authenticated trie, storage</td><td><code class="src">internal/state</code>, <code class="src">internal/vm</code>, <code class="src">internal/db</code></td></tr>
+<tr><td><a href="/protocol/network/">Networking</a></td><td>libp2p gossip, sync, peer scoring, transaction pool</td><td><code class="src">internal/p2p</code>, <code class="src">internal/txpool</code></td></tr>
+<tr><td><a href="/protocol/accounts/">Authorization</a></td><td>Root, session, recovery and sponsorship rules</td><td><code class="src">pkg/sessionauth</code></td></tr>
+<tr><td><a href="/protocol/privacy/">Privacy</a></td><td>Orchard bridge, wallet, native Rust library</td><td><code class="src">pkg/shielded</code></td></tr>
+<tr><td><a href="/developers/">Client boundary</a></td><td>JSON-RPC and the command-line client</td><td><code class="src">internal/rpc</code>, <code class="src">cmd/resilience-cli</code></td></tr>
+</tbody>
+</table></div>
+</section>
+
+<p class="sources">Sources: <code class="src">internal/blockchain/protocol_manifest.go</code>, <code class="src">configs/genesis.json</code>, architecture overview.</p><details class="cite">
+<summary>Cite this page</summary>
+<pre><code>@misc{resilience-protocol,
+  title  = {{Protocol overview}},
+  author = {{Resilience Network}},
+  year   = {2026},
+  note   = {Reference implementation c3acec4, protocol manifest r28},
+  url    = {https://resiliencenetwork.xyz/protocol/}
+}</code></pre>
+</details>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

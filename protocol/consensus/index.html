@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consensus and finality | Resilience Network</title>
+<meta name="description" content="Resilience Network consensus: durable locks, finality certificates, RFC 9381 ECVRF secret leader election, signing domains, forced evidence inclusion, slashing and timing parameters.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/protocol/consensus/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Consensus and finality | Resilience Network">
+<meta property="og:description" content="Resilience Network consensus: durable locks, finality certificates, RFC 9381 ECVRF secret leader election, signing domains, forced evidence inclusion, slashing and timing parameters.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/protocol/consensus/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/" class="is-section">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/protocol/">Protocol</a> / <a href="/protocol/consensus/">Consensus</a></div>
+    <span class="badge b-impl">Implemented</span>
+    <h1>Consensus and finality</h1>
+    <p class="lead">Resilience uses a lock-based BFT protocol in the Tendermint family with stake-weighted, secret leader election. A block is final once validators holding more than two thirds of voting power precommit it. Safety holds while less than one third of voting power is Byzantine and signing records are never rolled back.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#model"><span class="n">§1</span><span>Model and assumptions</span></a></li><li><a href="#parameters"><span class="n">§2</span><span>Parameters</span></a></li><li><a href="#locks"><span class="n">§3</span><span>Views, locks and certificates</span></a></li><li><a href="#leaders"><span class="n">§4</span><span>Secret leader election</span></a></li><li><a href="#domains"><span class="n">§5</span><span>Signing domains</span></a></li><li><a href="#evidence"><span class="n">§6</span><span>Evidence and slashing</span></a></li><li><a href="#epochs"><span class="n">§7</span><span>Epochs and the validator set</span></a></li><li><a href="#limits"><span class="n">§8</span><span>Open limits</span></a></li></ol><div class="pager"><a href="/protocol/">Previous: Overview</a><a href="/protocol/execution/">Next: Execution</a></div></nav>
+    <article class="prose">
+<section id="model">
+<h2><span class="n">§1</span>Model and assumptions<a class="anchor" href="#model" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Assumption</th><th scope="col">If it breaks</th></tr></thead>
+<tbody>
+<tr><td>Less than one third of voting power is Byzantine</td><td>Conflicting blocks could finalize</td></tr>
+<tr><td>One validator set per height; keys are authenticated</td><td>Certificates become ambiguous</td></tr>
+<tr><td>Signing storage is durable, unshared, and never rolled back</td><td>A validator can equivocate after a restart</td></tr>
+<tr><td>Messages are eventually delivered and an honest proposer eventually wins</td><td>Progress stalls; safety is unaffected</td></tr>
+<tr><td>Validator clocks are NTP-disciplined</td><td>Slot timing drifts. Skew is detected and alerted, not corrected</td></tr>
+</tbody>
+</table></div>
+<p>The slot scheduler runs at a fixed interval; it is not an adaptive partial-synchrony pacemaker. Liveness under partitions and high latency is therefore measured rather than assumed. See <a href="/assurance/#load">load qualification</a>.</p>
+</section>
+
+<section id="parameters">
+<h2><span class="n">§2</span>Parameters<a class="anchor" href="#parameters" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table class="params">
+<caption>Development defaults from <code class="src">configs/config.toml</code></caption>
+<thead><tr><th scope="col">Parameter</th><th scope="col">Value</th><th scope="col">At the 2 s target</th></tr></thead>
+<tbody>
+<tr><td>Slot duration</td><td>2 s</td><td></td></tr>
+<tr><td>Slots per epoch</td><td>192</td><td>384 s</td></tr>
+<tr><td>Rounds per slot, maximum</td><td>3</td><td></td></tr>
+<tr><td>Active validators, maximum</td><td>128</td><td></td></tr>
+<tr><td>Minimum validator stake</td><td>10,000 RSC</td><td></td></tr>
+<tr><td>Unbonding period</td><td>14 epochs (2,688 slots)</td><td>about 89.6 min</td></tr>
+<tr><td>Downtime participation window</td><td>300 committed blocks</td><td>about 10 min</td></tr>
+<tr><td>Double-sign slash</td><td>5% (500 basis points)</td><td></td></tr>
+<tr><td>Downtime slash</td><td>0.1% (10 basis points)</td><td></td></tr>
+<tr><td>Forced evidence-inclusion deadline</td><td>32 slots</td><td>about 64 s</td></tr>
+<tr><td>Evidence lifetime</td><td>2,688 slots</td><td>about 89.6 min</td></tr>
+<tr><td>Evidence per block / pending queue</td><td>128 / 512</td><td></td></tr>
+</tbody>
+</table></div>
+<p>The Kubernetes template uses 1 s slots with 64-slot epochs, and the test harness 1 s with 32. These are different consensus profiles. A network qualifies one exact profile, and none of these values may change on an initialized database.</p>
+</section>
+
+<section id="locks">
+<h2><span class="n">§3</span>Views, locks and certificates<a class="anchor" href="#locks" aria-label="Link to this section">#</a></h2>
+<p>At a fixed height, views are ordered by (slot, round). A validator precommits a block only after fully validating it and seeing more than two thirds of active voting power prevote that exact block in the current view. It writes the lock and the certificate to disk <em>before</em> releasing the precommit signature. A failed write or a corrupt record stops voting rather than clearing the lock.</p>
+
+<figure class="fig" id="fig-2">
+<div class="frame">
+<svg viewBox="0 0 680 236" role="img" aria-labelledby="fig2-t">
+<title id="fig2-t">A validator locked at view (5,1) accepts a conflicting block only with a prevote certificate newer than its lock.</title>
+<defs><marker id="f2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<text class="s" x="60" y="24">slot 5</text><text class="s" x="380" y="24">slot 6</text>
+<path class="ln" d="M30 64H652" marker-end="url(#f2a)"/>
+<g>
+<path class="ln" d="M60 58V70M160 58V70M260 58V70M380 58V70M480 58V70M580 58V70"/>
+<text class="m" x="60" y="90" text-anchor="middle">(5,0)</text><text class="m" x="160" y="90" text-anchor="middle">(5,1)</text><text class="m" x="260" y="90" text-anchor="middle">(5,2)</text>
+<text class="m" x="380" y="90" text-anchor="middle">(6,0)</text><text class="m" x="480" y="90" text-anchor="middle">(6,1)</text><text class="m" x="580" y="90" text-anchor="middle">(6,2)</text>
+</g>
+<g><path d="M160 52l9 12-9 12-9-12z" fill="#fdc703" stroke="#9a7700"/><text class="tn" x="174" y="46">lock on block A</text></g>
+<g><path class="ln-a" d="M380 128H480"/><path class="ln-a" d="M380 122V134M480 122V134"/>
+<text class="g" x="650" y="152" text-anchor="end">Accept B at (6,1): its certificate from (6,0) is newer than the lock</text></g>
+<g><path class="ln-r" d="M60 184H580" stroke-dasharray="5 4"/><path class="ln-r" d="M60 178V190M580 178V190"/>
+<text class="r" x="60" y="208">Refuse B at (6,2): its certificate from (5,0) is older than the lock. Prevote A or nil.</text></g>
+</svg>
+</div>
+<figcaption><b>Figure 2.</b> Proof of lock change. Timeouts and nil votes never clear a lock; only an authenticated prevote certificate strictly newer than the lock and older than the proposal does.</figcaption>
+</figure>
+
+<ul>
+<li>A locked validator prevotes its locked block, or a conflicting block only if it carries such a certificate.</li>
+<li>A locked proposer re-proposes the original block unchanged: same hash, author signature, timestamp and state commitments. It signs a fresh envelope for the new view.</li>
+<li>Finality signatures carry their slot and round. Verifiers reject mixed views, views earlier than the block's proposal, duplicate signers, and insufficient power. Quorum counts voting power, not signatures.</li>
+<li>Sync import accepts a block finalized in a later view than the one it was created in.</li>
+</ul>
+</section>
+
+<section id="leaders">
+<h2><span class="n">§4</span>Secret leader election<a class="anchor" href="#leaders" aria-label="Link to this section">#</a></h2>
+<p>Each validator privately evaluates the RFC 9381 ECVRF with its own key over the view input</p>
+<pre><code>alpha = head.Randomness ‖ slot (8 bytes, big-endian) ‖ round (4 bytes, big-endian)</code></pre>
+<p>It may propose only if <code>BE64(output[:8]) mod totalVotingPower</code> falls inside its own stake window. The winner publishes the 80-byte proof and 32-byte output in the block header, so one evaluation is both the lottery ticket and the next randomness beacon.</p>
+
+<figure class="fig" id="fig-3">
+<div class="frame">
+<svg viewBox="0 0 680 196" role="img" aria-labelledby="fig3-t">
+<title id="fig3-t">Total voting power divided into one window per validator. A validator proposes only when its own output lands in its own window.</title>
+<defs><marker id="f3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-a" d="M0 0L10 5L0 10z"/></marker>
+<marker id="f3q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-q" d="M0 0L10 5L0 10z"/></marker></defs>
+<text class="s" x="30" y="22">Total voting power, example of four validators</text>
+<rect class="bx" x="30" y="72" width="248" height="40"/><text class="tn" x="154" y="97" text-anchor="middle">V1 window, 40%</text>
+<rect class="bx-a" x="278" y="72" width="155" height="40"/><text class="tn" x="355" y="97" text-anchor="middle">V2 window, 25%</text>
+<rect class="bx" x="433" y="72" width="124" height="40"/><text class="tn" x="495" y="97" text-anchor="middle">V3, 20%</text>
+<rect class="bx" x="557" y="72" width="93" height="40"/><text class="tn" x="603" y="97" text-anchor="middle">V4, 15%</text>
+<path class="ln-a" d="M380 40V70" marker-end="url(#f3a)"/><text class="tn" x="388" y="48">V2's output</text>
+<path class="ln-q" d="M120 40V70" marker-end="url(#f3q)"/><text class="s" x="128" y="48">V3's output</text>
+<text class="g" x="278" y="138">V2's output is in V2's window: V2 may propose.</text>
+<text class="s" x="30" y="160">V3's output lands outside V3's window: V3 does not propose.</text>
+<text class="s" x="30" y="180">Nobody can compute another validator's output without its secret key.</text>
+</svg>
+</div>
+<figcaption><b>Figure 3.</b> Stake-weighted sortition with one expected winner per round. Window sizes are illustrative.</figcaption>
+</figure>
+
+<ul>
+<li><strong>Secret.</strong> Outcomes depend on secret keys, so no observer can derive the schedule from the public head. This removes advance targeting of the next proposer by denial of service or bribery.</li>
+<li><strong>Probabilistic.</strong> A round may have no winner, and every validator times out and advances. It may have several, and the first valid proposal wins while the BFT rounds absorb the race. Empty rounds depend on secret keys, so they leak no lookahead.</li>
+<li><strong>Re-proposals</strong> carry a leader claim (winner, proof, output) that is bound into the envelope signature.</li>
+<li><strong>Suite.</strong> ECVRF-EDWARDS25519-SHA512-TAI. Try-and-increment is safe here because the VRF input is public, so its input-dependent running time leaks nothing.</li>
+</ul>
+<div class="note warn"><span class="t">Known limit</span><p>A winner sees its output before publishing and can withhold its block, which turns a fair coin into a 3/4 coin. That is why contracts cannot read the beacon. A threshold beacon is <a href="/decisions/#beacon">proposed</a>.</p></div>
+</section>
+
+<section id="domains">
+<h2><span class="n">§5</span>Signing domains<a class="anchor" href="#domains" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Message</th><th scope="col">Construction</th></tr></thead>
+<tbody>
+<tr><td>Block header, by its author</td><td>Ed25519 over ASCII <code>RESILIENCE_BLOCK_HEADER_V1</code> followed by the 32-byte header hash; 58 bytes, no terminator or length prefix</td></tr>
+<tr><td>Prevote and precommit</td><td>Keccak-256 of <code>RESILIENCE_CONSENSUS_VOTE_V2</code> ‖ type ‖ slot ‖ height ‖ round ‖ block hash</td></tr>
+<tr><td>Proposal envelope</td><td>32-byte digest of the genesis-bound view, block hash, certificate and leader claim</td></tr>
+<tr><td>VRF proof</td><td>The RFC 9381 construction, separate from all of the above</td></tr>
+</tbody>
+</table></div>
+<p>The signer interface exposes only header and vote signing, each over a 32-byte input, with no general message-signing method. Local, encrypted-keystore and remote signers produce identical signatures, and the remote signer enforces its own watermarks. The remote-signer custody path has an open internal finding; see <a href="/assurance/#reviews">Assurance</a>.</p>
+</section>
+
+<section id="evidence">
+<h2><span class="n">§6</span>Evidence and slashing<a class="anchor" href="#evidence" aria-label="Link to this section">#</a></h2>
+<p>Correct builders include every provable, unexpired pending evidence item, oldest offense first, up to 128 per block, and blocks must carry evidence in that canonical order. Validators enforce timely inclusion by withholding votes from fresh proposals that omit evidence they have held for more than 32 slots.</p>
+<p>Omission is punished at vote time instead of at validity: validators withhold their votes from a fresh proposal that omits evidence they have held past the deadline. Censorship therefore fails whenever more than one third of voting power holds the evidence, because the censoring block cannot reach quorum.</p>
+<p>Omission is deliberately not a validity rule, because honest nodes can hold different pending sets and rejecting their blocks would fork them. Locked re-proposals are exempt, since their body cannot change. If a node cannot evaluate the rule, it votes normally: withholding is a preference, never a safety mechanism.</p>
+</section>
+
+<section id="epochs">
+<h2><span class="n">§7</span>Epochs and the validator set<a class="anchor" href="#epochs" aria-label="Link to this section">#</a></h2>
+<p>The validator set changes only at epoch boundaries, so a successful stake action does not mean immediate participation. Rewards depend on participation and on time-weighted delegation. A restarting node must rebuild exactly the same set. Jailing for downtime follows the signed ratio within a participation window of 300 committed blocks, not a count of consecutive misses.</p>
+</section>
+
+<section id="limits">
+<h2><span class="n">§8</span>Open limits<a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Slot time is a target, not a bound on finality.</li>
+<li>Light clients trust the validator set on first contact until out-of-band anchor pinning is implemented.</li>
+<li>If more than one third of voting power is eclipsed from the evidence, inclusion can be delayed until the evidence expires.</li>
+<li>Measured liveness under sustained load is the binding constraint today. See <a href="/assurance/#load">Assurance</a>.</li>
+</ul>
+</section>
+
+<p class="sources">Sources: <code class="src">internal/consensus/engine.go</code>, <code class="src">locking.go</code>, <code class="src">leader.go</code>, <code class="src">importer.go</code>, <code class="src">evidence_force.go</code>; <code class="src">crypto/ecvrf.go</code>, <code class="src">crypto/validator_signing.go</code>; <code class="src">configs/config.toml</code>; consensus/BFT threat model 0.3.0.</p><details class="cite">
+<summary>Cite this page</summary>
+<pre><code>@misc{resilience-protocol-consensus,
+  title  = {{Consensus and finality}},
+  author = {{Resilience Network}},
+  year   = {2026},
+  note   = {Reference implementation c3acec4, protocol manifest r28},
+  url    = {https://resiliencenetwork.xyz/protocol/consensus/}
+}</code></pre>
+</details>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

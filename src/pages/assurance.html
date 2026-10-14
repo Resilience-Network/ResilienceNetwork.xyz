@@ -1,0 +1,112 @@
+<!--meta
+{"path": "assurance/", "title": "Assurance and evidence", "nav": "assurance",
+ "h1": "Assurance and evidence",
+ "lead": "No result on this page is an external certification. Every review so far is internal and first-party, and each is tied to the revision it examined. We publish what was tested, what was found and what remains open, so you can judge the evidence yourself.",
+ "crumbs": [["Assurance", "/assurance/"]],
+ "badge": "<span class=\"badge b-int\">Internal evidence</span>",
+ "description": "How Resilience Network is tested and reviewed: evidence rules, test layers, 70 live user stories, threat models, load qualification, EVM gas calibration and the internal review history.",
+ "cite": true,
+ "sources": "Testing guide; threat models; load qualification report of 2026-09-20; EVM gas-to-time report of 2026-09-26; audit index and the reports it lists; internal campaign report of 2026-09-21."}
+-->
+<section id="rules">
+<h2>Rules for evidence</h2>
+<ul>
+<li>A result qualifies only the revision and the profile it ran on. Old passing results are never reused as new evidence.</li>
+<li>Internal and agent-assisted reviews are labeled internal and are never described as independent audits.</li>
+<li>An original report's verdict is never edited after a fix. The fix is recorded next to the report.</li>
+<li>Skipped, blocked or timed-out checks count as open gates, not as passes.</li>
+</ul>
+</section>
+
+<section id="testing">
+<h2>How the implementation is tested</h2>
+<table>
+<thead><tr><th scope="col">Layer</th><th scope="col">What runs</th></tr></thead>
+<tbody>
+<tr><td>Unit and package tests</td><td>346 Go test files across consensus, state, VM, P2P, RPC, authorization and shielded packages; the full suite also runs under the race detector</td></tr>
+<tr><td>Live user stories</td><td>70 scripted scenarios on fresh four-validator networks (<a href="#stories">listed below</a>)</td></tr>
+<tr><td>Differential testing</td><td>The EVM against go-ethereum: seeded random programs, stateful random programs and the Ethereum state tests, with every divergence classified</td></tr>
+<tr><td>Fuzzing</td><td>Targets for RPC, P2P, EVM, session authorization, names, staking shares and shielded decoding</td></tr>
+<tr><td>Determinism lint</td><td>A static check for nondeterministic constructs in consensus paths</td></tr>
+<tr><td>Reference models</td><td>An independent session-authorization model and test vectors; cryptographic vectors such as RFC 9381 and Orchard empty roots</td></tr>
+<tr><td>Fault injection</td><td>Injected disk-full errors, a Byzantine peer, proxy-driven network faults in the style of Jepsen, and restart-phase sweeps</td></tr>
+<tr><td>Replay equivalence</td><td>A recorded multi-epoch chain replayed through the production importer, with a restart at every boundary</td></tr>
+</tbody>
+</table>
+<div class="note"><span class="t">Internal campaign, 2026-09-20 to 09-21</span><p>About 289 million fuzz executions with zero crashers. The full story suite of the time ran natively twice with 62 of 67 passing, none failing, and every non-pass tracked.</p></div>
+</section>
+
+<section id="stories">
+<h2>The 70 user stories</h2>
+<p>Each story runs real binaries over RPC, most on a fresh disposable network. When run with the story-test daemon, every finalized block is also checked for supply, delegation-share, nonce and unbonding invariants. The stories that stress restarts and faults (52, 59, 69 and 70) end with a signing-safety assertion that fails on any signing-guard failure.</p>
+<details class="stories"><summary>Authorization, sessions, recovery and sponsorship <span class="muted">(20)</span></summary>
+<table><tbody><tr><td class="num">01</td><td>Session Key Scoped Delegation &amp; Transfer</td></tr><tr><td class="num">02</td><td>Session Policy Boundaries &amp; Security (Negative Tests)</td></tr><tr><td class="num">09</td><td>Session Grant Expiry &amp; Deposit Recovery</td></tr><tr><td class="num">10</td><td>Session Fee Caps &amp; Security Reserve Limits</td></tr><tr><td class="num">11</td><td>Root Activation &amp; Threshold Governance</td></tr><tr><td class="num">12</td><td>Root Key Rotation &amp; Reserve Management</td></tr><tr><td class="num">13</td><td>Offline Root Signing &amp; Witness Assembly</td></tr><tr><td class="num">20</td><td>Session Grant Atomic Replacement Lifecycle</td></tr><tr><td class="num">23</td><td>Root Multisig Intent Replay &amp; Domain Separation</td></tr><tr><td class="num">26</td><td>Authorization-Mode Transition &amp; Bypass Attempts</td></tr><tr><td class="num">27</td><td>Real Domain Separation &amp; Signed-Intent Tampering</td></tr><tr><td class="num">28</td><td>Multisig Witness Integrity</td></tr><tr><td class="num">29</td><td>Revoke/Replace/Rotate vs Queued Spending</td></tr><tr><td class="num">30</td><td>Session Boundary &amp; Refill Matrix</td></tr><tr><td class="num">31</td><td>Concurrent Grants Competing for One Balance</td></tr><tr><td class="num">32</td><td>Policy Permissions Across Action Types</td></tr><tr><td class="num">33</td><td>Cancellation Is Not Revocation</td></tr><tr><td class="num">39</td><td>Grant Deposit Ownership &amp; Cleanup Lifecycle</td></tr><tr><td class="num">65</td><td>Guardian Recovery: Quorum, Delay and Cancellation</td></tr><tr><td class="num">66</td><td>FR-004 Sponsored Transactions: Paymaster Gas Abstraction</td></tr></tbody></table></details>
+<details class="stories"><summary>Transfers, transaction pool and fees <span class="muted">(8)</span></summary>
+<table><tbody><tr><td class="num">03</td><td>Transparent Transfers &amp; Nonce Sequencing</td></tr><tr><td class="num">07</td><td>Transfer Value Boundaries &amp; Input Hardening</td></tr><tr><td class="num">08</td><td>Mempool Gas Economics &amp; Tx Lifecycle</td></tr><tr><td class="num">24</td><td>Mempool Nonce Sequencing &amp; Replacement Fee Bumps</td></tr><tr><td class="num">34</td><td>Malformed &amp; Forged Raw Transaction Envelopes</td></tr><tr><td class="num">37</td><td>Lost Response &amp; Safe Transaction Retry</td></tr><tr><td class="num">38</td><td>Exact Balances &amp; Replacement Thresholds</td></tr><tr><td class="num">62</td><td>EIP-1559 Fee Market: Base-Fee Burn &amp; Tip</td></tr></tbody></table></details>
+<details class="stories"><summary>Shielded transfers <span class="muted">(10)</span></summary>
+<table><tbody><tr><td class="num">04</td><td>Zero-Knowledge Shielded Privacy Pool</td></tr><tr><td class="num">14</td><td>Shielded Wallet Lifecycle &amp; Recovery</td></tr><tr><td class="num">15</td><td>Shielded Pool Invariants &amp; Proof Safety</td></tr><tr><td class="num">25</td><td>Shielded Multi-Party Pool Accumulation &amp; Tree Growth</td></tr><tr><td class="num">35</td><td>Shielded Proof &amp; Public-Field Binding</td></tr><tr><td class="num">36</td><td>Shielded Duplicate Submission &amp; Activation Gates</td></tr><tr><td class="num">41</td><td>Wallet Sync Retry &amp; Untrusted Compact Data</td></tr><tr><td class="num">60</td><td>Native Private Payment Lifecycle</td></tr><tr><td class="num">61</td><td>Shielded Spend Binding &amp; Double-Spend Defense</td></tr><tr><td class="num">63</td><td>FR-001 Selective Disclosure: Audit, Accounting &amp; Receipts</td></tr></tbody></table></details>
+<details class="stories"><summary>Staking and validators <span class="muted">(7)</span></summary>
+<table><tbody><tr><td class="num">05</td><td>Validator Staking &amp; Delegation</td></tr><tr><td class="num">16</td><td>Staking Boundary Rejections &amp; Guards</td></tr><tr><td class="num">21</td><td>Delegation Lifecycle &amp; Undelegation Boundaries</td></tr><tr><td class="num">42</td><td>Successful Validator Staking &amp; Exit</td></tr><tr><td class="num">43</td><td>Rewards, Delegation Switching &amp; Rounding</td></tr><tr><td class="num">55</td><td>Validator Misconduct, Jail &amp; Reward Exclusion</td></tr><tr><td class="num">67</td><td>FR-007 Liquid Staking: Share Transfers &amp; Vault Quotes</td></tr></tbody></table></details>
+<details class="stories"><summary>EVM <span class="muted">(4)</span></summary>
+<table><tbody><tr><td class="num">17</td><td>EVM Contract Deployment &amp; Call Boundaries</td></tr><tr><td class="num">22</td><td>EVM Out-Of-Gas &amp; State Rollback Isolation</td></tr><tr><td class="num">44</td><td>Nested EVM Calls &amp; Transaction Isolation</td></tr><tr><td class="num">45</td><td>Simulation &amp; Gas Estimation Do Not Mutate State</td></tr></tbody></table></details>
+<details class="stories"><summary>RPC, names, tooling and operations <span class="muted">(13)</span></summary>
+<table><tbody><tr><td class="num">06</td><td>Account &amp; Key Management Fundamentals</td></tr><tr><td class="num">18</td><td>Chain Inspection &amp; RPC Integrity</td></tr><tr><td class="num">19</td><td>Snapshot &amp; Offline Maintenance Guards</td></tr><tr><td class="num">40</td><td>Keystore Safety &amp; Interrupted Persistence</td></tr><tr><td class="num">46</td><td>History, Receipts, Logs &amp; Authorization Proofs</td></tr><tr><td class="num">47</td><td>Strict RPC Transport &amp; JSON Handling</td></tr><tr><td class="num">48</td><td>WebSocket Ownership &amp; Reconnect</td></tr><tr><td class="num">49</td><td>Explorer &amp; Faucet Journeys and Abuse</td></tr><tr><td class="num">51</td><td>Successful Snapshot Restore &amp; Prune</td></tr><tr><td class="num">54</td><td>Resource Abuse with an Honest Client</td></tr><tr><td class="num">56</td><td>Disk Failure &amp; Incompatible Startup</td></tr><tr><td class="num">57</td><td>Health, Metrics &amp; Origin Policy</td></tr><tr><td class="num">64</td><td>Native Name Service: Commit-Reveal Lifecycle</td></tr></tbody></table></details>
+<details class="stories"><summary>Fault tolerance <span class="muted">(8)</span></summary>
+<table><tbody><tr><td class="num">50</td><td>Graceful Restart &amp; Abrupt Crash Recovery</td></tr><tr><td class="num">52</td><td>Validator Outage &amp; Partition Recovery</td></tr><tr><td class="num">53</td><td>Fresh Peer Catch-Up &amp; Malicious Peer Isolation</td></tr><tr><td class="num">58</td><td>Generated Mixed-Action Sequences</td></tr><tr><td class="num">59</td><td>Long-Running Epoch &amp; Recovery Soak</td></tr><tr><td class="num">68</td><td>Live/Replay/Restart Equivalence</td></tr><tr><td class="num">69</td><td>Jepsen Network Faults &amp; Byzantine Adversaries</td></tr><tr><td class="num">70</td><td>Restart Phase Trigger Harness</td></tr></tbody></table></details>
+</section>
+
+<section id="threats">
+<h2>Threat models</h2>
+<p>Seven threat models define assets, attackers, required properties and residual gaps. Each is candidate design material, not an audit.</p>
+<table>
+<thead><tr><th scope="col">Model</th><th scope="col">Version</th><th scope="col">Residual gaps</th></tr></thead>
+<tbody>
+<tr><td>Consensus and BFT</td><td>0.3.0, 2026-09-26</td><td>Three: forced evidence inclusion (mitigated); no median-time clock guard (open); signer custody (partly mitigated by keystore and remote signer)</td></tr>
+<tr><td>EVM execution</td><td>0.1.0</td><td>Two: gas calibration measured, to confirm on reference hardware; SELFDESTRUCT semantics resolved by decision</td></tr>
+<tr><td>P2P networking</td><td>0.1.0</td><td>Two: isolation under total anchor denial (partly mitigated); development subnet bypass (warns at startup)</td></tr>
+<tr><td>Storage</td><td>0.1.0</td><td>Three: snapshot trust; retention override; disk exhaustion (residual)</td></tr>
+<tr><td>Transaction pool and MEV</td><td>0.1.0</td><td>Two: plaintext mempool (accepted with disclosure); saturation eviction (closed)</td></tr>
+<tr><td>Session authorization</td><td>0.2.0</td><td>A catalogue of properties and abuse cases, with release gates</td></tr>
+<tr><td>Shielded</td><td>current</td><td>Trust boundaries and required properties; external audit outstanding</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="load">
+<h2>Load qualification</h2>
+<p>Run on 2026-09-20 with four validators on one 10-vCPU host and a mixed load of 80% transfers and 20% storage-writing contract calls. Other tenants saturated the host for the whole campaign, so these results are lower bounds.</p>
+<table>
+<thead><tr><th scope="col">Offered load</th><th scope="col">Duration</th><th scope="col">Outcome</th></tr></thead>
+<tbody>
+<tr><td>20 TPS</td><td>30 min</td><td>Stable. 35,984 of 35,984 included; inclusion p50 1.5 s, p95 3.8 s</td></tr>
+<tr><td>50 TPS</td><td>60 s</td><td>Stable. Inclusion p50 1.5 s, p95 4.3 s</td></tr>
+<tr><td>50 TPS</td><td>32 min</td><td>Unstable. Healthy for about 5 minutes, then commit gaps of 42 s to over 133 s; longest block gap 576 s</td></tr>
+<tr><td>75 TPS</td><td>45 s</td><td>Degraded. 31% included</td></tr>
+<tr><td>100 to 200 TPS</td><td>short</td><td>Finality halts after about 600 to 800 inclusions</td></tr>
+<tr><td>500 TPS</td><td>30 s</td><td>No blocks produced</td></tr>
+</tbody>
+</table>
+<p>At every saturation point the first bottleneck was consensus liveness, not execution, RPC, the mempool or disk. The gas ceiling, about 300 simple transfers per second at 30 million gas per 2 s slot, was never reached.</p>
+<div class="note warn"><span class="t">Re-measurement pending</span><p>A fix that lets delayed rounds catch up from authenticated peer progress merged on 2026-10-08, after this campaign. Until load is measured again on uncontended hardware, the planning figure is 20 TPS sustained.</p></div>
+</section>
+
+<section id="gas-time">
+<h2>EVM gas-to-time calibration</h2>
+<p>On 2026-09-26 an adversarial corpus searched for the slowest block per unit of gas. The worst family projected to about 0.76 s for 30 million gas on the campaign host (best of three runs at 29.6 million gas; observed 0.75 to 0.92 s). ECRecover was the outlier and was repriced to 9,000 gas (<a href="/decisions/#ecrecover">decision</a>). The MLOAD family of memory-access opcodes, at about 25 ns per gas, are now the binding constraint, to be confirmed on reference validator hardware.</p>
+</section>
+
+<section id="reviews">
+<h2>Review history</h2>
+<table>
+<thead><tr><th scope="col">Date</th><th scope="col">Review</th><th scope="col">Scope</th><th scope="col">Outcome</th></tr></thead>
+<tbody>
+<tr><td>2026-10-13</td><td>Robustness re-review <span class="badge b-int">Internal</span></td><td>Crashes, disk, clocks, load, partitions, upgrades, operator mistakes</td><td>Planned; re-tests the September remediations</td></tr>
+<tr><td>2026-10-12</td><td>Security review of <code class="src">ef16072</code> <span class="badge b-int">Internal</span></td><td>14 layers, rated for a transparent-only public testnet</td><td>Not ready as configured. Open findings concentrate in availability and validator key custody: 1 critical, 2 high, 6 medium, 8 low, 2 informational. No finalized-state safety violation found. Regression tests for earlier critical and high findings: 13 of 13 pass.</td></tr>
+<tr><td>September 2026</td><td>Robustness review <span class="badge b-int">Internal</span></td><td>Crash recovery, partitions, concurrency, state invariants, sync</td><td>28 findings; remediation recorded alongside</td></tr>
+<tr><td>2026-09-12</td><td>Second-pass security audit <span class="badge b-int">Internal</span></td><td>Nine subsystems</td><td>44 findings: 42 fixed with regression tests. Of 2 design items, one was later fixed by secret leader election; the other, mempool MEV exposure, was accepted with disclosure</td></tr>
+<tr><td>September 2026</td><td>First-pass security review <span class="badge b-int">Internal</span></td><td>Eight subsystems</td><td>Fixes applied in code</td></tr>
+<tr><td>2026-09-11</td><td>Functional readiness baseline <span class="badge b-int">Internal</span></td><td>Completeness and reliability; security not scored</td><td>Not testnet-ready; remediation recorded</td></tr>
+</tbody>
+</table>
+<p>Findings from the 2026-10-12 review are tracked privately. Their details are published after fixes ship, under the <a href="/security/">disclosure policy</a>.</p>
+</section>

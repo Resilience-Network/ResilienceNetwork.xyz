@@ -1,49 +1,42 @@
-# Website Architecture & Design System
+# Architecture and design system
 
-This document outlines the visual structure, design tokens, and technical implementation of the Resilience Network research web portal (`resiliencenetwork.xyz`).
+## Intent
 
----
+A research document for a protocol that is still being proven. The design borrows from specification documents and engineering drawings rather than from product marketing: a cool paper ground with a faint drafting grid behind page titles, numbered sections, ruled tables, numbered figures, and status badges on claims. The brand's royal blue carries links and emphasis; the shield's gold marks the current location (active navigation, contents rail, lock markers) and is never used for text.
 
-## 1. Design Philosophy
+The one memorable element is on the home page: the development genesis commitment, printed in full as the network's identity.
 
-The site embodies an authoritative, intellectual, and peer-reviewed cryptographic research institute aesthetic (analogous to Paradigm, Flashbots, and Ethereum Research).
-- **Sole Mark Principle**: The official Resilience Shield (`logo.png`) is featured strictly once in the navigation header as an institutional hallmark.
-- **Editorial Gravitas**: Headings styled in `Instrument Serif` contrasted against geometric sans (`Plus Jakarta Sans`) and monospace code notation (`JetBrains Mono`).
-- **Mathematical Interactive Visualization**: A dynamic 2D canvas arithmetization model simulating Halo 2 polynomial constraint lattices and Merkle note commitments with mouse gravitation physics.
-- **Zero Framework Footprint**: Pure semantic HTML5, CSS custom properties, and vanilla ES6 JavaScript.
+## Tokens (`assets/css/site.css`)
 
----
+| Token | Value | Use |
+| --- | --- | --- |
+| `--paper` | `#fafbfd` | Page background |
+| `--panel` | `#f0f3f9` | Alternate bands, notes, code |
+| `--ink` | `#121a33` | Text and heavy rules |
+| `--ink-2`, `--muted` | `#3d4763`, `#5f6880` | Secondary text |
+| `--rule` | `#d8deea` | Hairlines |
+| `--blue` | `#002fa6` | Brand, links (from `logo.png`) |
+| `--blue-deep` | `#001c66` | Status strip, hover |
+| `--gold` | `#fdc703` | Location marks only (from `logo.png`) |
+| `--st-*` | | Status badge colors |
 
-## 2. Design Tokens (`:root`)
+Type: Source Serif 4 (optical sizes) for all text and headings; IBM Plex Mono only for literal values such as hashes, paths, constants and code. Body 17 px, line height 1.62, reading measure 42 rem.
 
-```css
-:root {
-  /* Brand Accents */
-  --color-blue: #002fa6;
-  --color-blue-dark: #001f73;
-  --color-blue-tint: #f0f4ff;
-  --color-gold: #b45309;
-  --color-gold-bright: #d97706;
+## Page anatomy
 
-  /* Editorial Light Canvas */
-  --color-canvas: #ffffff;
-  --color-canvas-alt: #f8fafc;
-  --color-border: #e2e8f0;
+- **Header** with the logo and six sections; a **status strip** under it states what is true today on every page.
+- **Page head** with breadcrumbs, optional status badge, title, lead and as-of line, over the drafting grid.
+- **Doc layout**: a sticky contents rail (generated from `<section id>` and `<h2>`) and a single reading column. Sections are numbered §1, §2 and the numbers hang in the margin on wide screens.
+- **Footer** with the verification stamp generated from `src/site.json`.
 
-  /* Typography */
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-```
+## Components
 
----
+`badge` (`b-impl`, `b-exp`, `b-prop`, `b-hist`, `b-int`, `b-no`, `b-plain`), `note` and `note warn`, `pull`, `params` tables, `register` (home feature list), `defaults` row, `manifest` card, `gates` checklists, `terms` definition list, `stories` disclosure lists, `cite` blocks.
 
-## 3. Structural Components
+## Figures
 
-1. **Academic Top Navigation**: Displays the single official emblem, protocol metadata badge, and direct links to GitHub, architecture documentation, and live epoch status.
-2. **Hero Abstract & Thesis**: Large serif declaration ("Something is cooking in the cryptography lab") followed by an academic abstract detailing the state machine mechanics.
-3. **Interactive Halo 2 Constraint Mesh**: Real-time canvas rendering polynomial commitment nodes, algebraic root indicators ($\omega^i$), and interactive mouse gravitational vector fields.
-4. **Architectural Research Pillars (Tracks 01—04)**: Technical breakdowns covering Orchard Zero-Knowledge Shielded Pools, Deterministic PoS Consensus, Native EVM Execution, and Guardian Social Recovery.
-5. **Protocol Specification Manifest**: A formal parameter table detailing the consensus quorum, curve cycles, hash algorithms, and genesis commitments.
-6. **Academic Footer**: Links to research tracks, protocol security index, reference vectors, and formal test harness specifications.
+Figures are inline SVG inside `figure.fig`, drawn with the classes at the end of the stylesheet (`bx`, `bx-a`, `ln`, `t`, `s`, and so on) so they follow the tokens. Each has a `<title>` for screen readers, a numbered caption, a 680-unit-wide viewBox, and one arrow marker per path. Text stays at 11.5 px or larger at full width.
+
+## Accessibility and robustness
+
+Skip link, landmarks, one `h1`, labelled navigation, visible focus, `scope` on table headers, reduced-motion respected, print stylesheet, and full content without JavaScript.

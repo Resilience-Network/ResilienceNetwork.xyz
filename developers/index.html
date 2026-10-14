@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For developers | Resilience Network</title>
+<meta name="description" content="Integrating with Resilience Network: what differs from Ethereum, the JSON-RPC surface (67 methods), the TypeScript SDK&#x27;s scope, command-line tools, building from source and showing authority to users.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/developers/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="For developers | Resilience Network">
+<meta property="og:description" content="Integrating with Resilience Network: what differs from Ethereum, the JSON-RPC surface (67 methods), the TypeScript SDK&#x27;s scope, command-line tools, building from source and showing authority to users.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/developers/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/" class="is-section">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/developers/">Developers</a></div>
+    
+    <h1>For developers</h1>
+    <p class="lead">There is no public endpoint yet, and the source code is private during pre-mainnet development. This page documents the interfaces as they stand, so you can plan an integration and know where it will differ from Ethereum.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#first"><span class="n">§1</span><span>Five things to know first</span></a></li><li><a href="#rpc"><span class="n">§2</span><span>JSON-RPC</span></a></li><li><a href="#sdk"><span class="n">§3</span><span>TypeScript SDK</span></a></li><li><a href="#tools"><span class="n">§4</span><span>Command-line tools</span></a></li><li><a href="#build"><span class="n">§5</span><span>Building from source</span></a></li><li><a href="#display"><span class="n">§6</span><span>Showing authority to users</span></a></li></ol></nav>
+    <article class="prose">
+<section id="first">
+<h2><span class="n">§1</span>Five things to know first<a class="anchor" href="#first" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Ethereum wallets cannot sign Resilience transactions.</strong> <code>eth_sendRawTransaction</code> accepts the chain's own V2 envelope, not Ethereum's RLP transactions. Use the TypeScript SDK (private and unpublished for now) or the command-line client.</li>
+<li><strong>Bind every signature to the chain.</strong> Configure the expected chain ID, genesis and capability in your application. Never learn them from the RPC endpoint you are talking to.</li>
+<li><strong>A simulation is advice.</strong> State, nonces, fees, grants and activation can all change before inclusion.</li>
+<li><strong>An ambiguous submission is not a failure.</strong> If a submit times out, keep the canonical bytes and the transaction ID and look that ID up. Never re-sign a replacement blindly.</li>
+<li><strong>Pending transactions are public.</strong> Use slippage bounds and deadline heights on market-sensitive actions, and never put secrets in calldata.</li>
+</ol>
+</section>
+
+<section id="rpc">
+<h2><span class="n">§2</span>JSON-RPC<a class="anchor" href="#rpc" aria-label="Link to this section">#</a></h2>
+<p>JSON-RPC 2.0 over HTTP and WebSocket. A batch holds 1 to 32 calls, and a request or message is at most 2 MiB. A request without an <code>id</code> is a notification: it executes and gets no response. Successful responses always include <code>result</code>, even when it is <code>null</code>. Transaction lookups cover the node's recent window of up to 1,000 blocks, so <code>null</code> does not prove a transaction never existed.</p>
+<div class="table-wrap"><table>
+<caption>Registered methods by family. Names without a prefix exist as both <code>eth_</code> and <code>rsc_</code>.</caption>
+<thead><tr><th scope="col">Family</th><th scope="col">Methods</th></tr></thead>
+<tbody>
+<tr><td>web3 and net</td><td><code>web3_clientVersion</code>, <code>web3_sha3</code>, <code>net_version</code>, <code>net_peerCount</code>, <code>net_listening</code></td></tr>
+<tr><td>Chain and accounts</td><td><code>chainId</code>, <code>blockNumber</code>, <code>getBalance</code>, <code>getTransactionCount</code>, <code>getCode</code>, <code>getStorageAt</code>, <code>getBlockByNumber</code>, <code>getBlockByHash</code>, <code>syncing</code></td></tr>
+<tr><td>Transactions</td><td><code>sendRawTransaction</code>, <code>getTransactionByHash</code>, <code>getTransactionReceipt</code>, <code>call</code>, <code>estimateGas</code>, <code>getLogs</code></td></tr>
+<tr><td>Fees</td><td><code>gasPrice</code>, <code>maxPriorityFeePerGas</code>, <code>feeHistory</code></td></tr>
+<tr><td>Consensus, <code>rsc_</code> only</td><td><code>getValidators</code>, <code>getEpochInfo</code>, <code>getStakeInfo</code>, <code>nodeInfo</code>, <code>getFinalizedHeader</code></td></tr>
+<tr><td>Authorization, <code>rsc_</code> only</td><td><code>getRootAuthority</code>, <code>getRecovery</code>, <code>getSessionGrant</code>, <code>getSessionNonce</code>, <code>getSessionUsage</code>, <code>decodePolicy</code>, <code>previewPolicy</code>, <code>estimateAuthorizationGas</code>, <code>simulateAuthorizedTransaction</code>, <code>getAuthorizationFinalityStatus</code>, <code>getAuthorizationProof</code></td></tr>
+<tr><td>Shielded, <code>rsc_</code> only</td><td><code>getShieldedPoolBalance</code>, <code>getShieldedTreeState</code>, <code>hasNullifier</code>, <code>getShieldedCompactBlock</code>, <code>getShieldedCompactBlocks</code>, <code>getShieldedTransaction</code></td></tr>
+<tr><td>Names, <code>rsc_</code> only</td><td><code>resolveName</code>, <code>reverseName</code>, <code>nameInfo</code>, <code>nameQuote</code></td></tr>
+</tbody>
+</table></div>
+<p>The 18 <code>eth_</code> methods each have an <code>rsc_</code> alias served by the same handler: 67 registered methods in total, plus the subscribe and unsubscribe transport methods. Subscriptions are <code>newHeads</code>, <code>newPendingTransactions</code>, <code>logs</code> and <code>syncing</code>, up to 64 per connection. Notifications to a slow consumer can be dropped, so reconcile with reads after reconnecting.</p>
+<pre><code>curl -s http://127.0.0.1:8545 \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"rsc_chainId","params":[],"id":1}'</code></pre>
+</section>
+
+<section id="sdk">
+<h2><span class="n">§3</span>TypeScript SDK<a class="anchor" href="#sdk" aria-label="Link to this section">#</a></h2>
+<p>A standalone TypeScript SDK covers the transparent account and session flow. Its repository is private and it is not published to npm yet.</p>
+<ul>
+<li>Canonical transaction, session and grant codecs and typed hashes, checked against pinned chain vectors.</li>
+<li>A bounded HTTP JSON-RPC transport with typed chain, authorization, fee and simulation reads.</li>
+<li>Raw Ed25519 and P-256 signers. You supply key custody; the SDK never stores private keys.</li>
+<li>A lifecycle API for DIRECT activation, ROOT grants, both session key schemes and revocation, with one-attempt submission that reports accepted, rejected, not sent or unknown.</li>
+<li>WebAuthn representation parsers for passkey sessions.</li>
+</ul>
+<p>Out of scope today: a shielded wallet and the sponsorship lifecycle. Separate release gates remain for registry publication and licensing, production relying-party durability, other browser engines and physical devices, and independent security review.</p>
+</section>
+
+<section id="tools">
+<h2><span class="n">§4</span>Command-line tools<a class="anchor" href="#tools" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Binary</th><th scope="col">Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>resilienced</code></td><td>Node daemon</td></tr>
+<tr><td><code>resilience-cli</code></td><td>Chain status, transfers (including to <code>.rsc</code> names), sponsorship, root authority and recovery, sessions, staking, names, the shielded wallet, snapshots</td></tr>
+<tr><td><code>keygen</code></td><td>Validator keys and encrypted keystores</td></tr>
+<tr><td><code>resilience-signer</code></td><td>Remote validator signer over mutual TLS</td></tr>
+<tr><td><code>genesis-ceremony</code></td><td>Genesis generation</td></tr>
+<tr><td><code>faucet</code>, <code>explorer</code>, <code>resilience-bench</code></td><td>Development-network tools</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="build">
+<h2><span class="n">§5</span>Building from source<a class="anchor" href="#build" aria-label="Link to this section">#</a></h2>
+<p>For collaborators with access. The build needs Go at the version pinned in <code>go.mod</code>, Rust 1.88.0, a C toolchain and Python 3.11 or newer.</p>
+<pre><code>make build
+./build/resilienced --help
+./build/resilience-cli --help</code></pre>
+<p><code>make build</code> builds the native cryptography and all binaries. A build with <code>CGO_ENABLED=0</code> cannot process shielded activity and must never be used as evidence for it. The local development guide starts a four-validator network; a single daemon without a matching validator set does not produce blocks.</p>
+</section>
+
+<section id="display">
+<h2><span class="n">§6</span>Showing authority to users<a class="anchor" href="#display" aria-label="Link to this section">#</a></h2>
+<p>Before a user approves a session grant, show the application, the session key's fingerprint and scheme, the allowed actions, recipients and method selectors, the validity heights, spending and fee limits, attempt limits, and any contract or proxy risk. Derive that display from the same bytes that produce the policy hash, so what the user reads is what they sign.</p>
+<p>Keep session secrets apart from root secrets, and never send a private key to an RPC endpoint. A local "disconnect" button revokes nothing; only a finalized revocation does.</p>
+</section>
+
+<p class="sources">Sources: JSON-RPC reference and registered method inventory; wallet integration guide; CLI guide; SDK README and canonical API reference.</p>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

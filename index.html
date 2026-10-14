@@ -1,846 +1,231 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="no-js">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resilience Network — Cryptographic Research &amp; Protocol Specification</title>
-  <meta name="description" content="Resilience Network is a research-driven Proof-of-Stake blockchain with native Orchard zero-knowledge shielded state, deterministic finality, and EVM execution.">
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      /* Brand Color System */
-      --color-blue: #002fa6;
-      --color-blue-dark: #001f73;
-      --color-blue-tint: #f0f4ff;
-      --color-blue-subtle: rgba(0, 47, 166, 0.08);
-      
-      --color-gold: #b45309;
-      --color-gold-bright: #d97706;
-      --color-gold-bg: #fffbeb;
-      --color-gold-border: rgba(217, 119, 6, 0.25);
-      
-      --color-canvas: #ffffff;
-      --color-canvas-alt: #f8fafc;
-      
-      --color-text-primary: #0f172a;
-      --color-text-secondary: #475569;
-      --color-text-tertiary: #64748b;
-      --color-text-muted: #94a3b8;
-      
-      --color-border: #e2e8f0;
-      --color-border-light: #f1f5f9;
-      
-      --font-serif: 'Instrument Serif', Georgia, serif;
-      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      
-      --max-width: 1140px;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resilience Network</title>
+<meta name="description" content="Resilience Network is an experimental proof-of-stake blockchain with BFT finality, an EVM execution layer, native account authorization and Orchard shielded transfers. Specifications, evidence and current status.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/">
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      width: 100%;
-      background-color: var(--color-canvas);
-      color: var(--color-text-primary);
-      font-family: var(--font-sans);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* Clean Subtle Grid Line */
-    .border-divider {
-      width: 100%;
-      height: 1px;
-      background: var(--color-border);
-    }
-
-    .container {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-
-    /* Navigation Bar */
-    header {
-      position: sticky;
-      top: 0;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--color-border);
-      z-index: 50;
-    }
-
-    .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 72px;
-    }
-
-    /* THE LOGO: Used strictly once here as requested */
-    .brand-identity {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .brand-logo-img {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      display: block;
-      border: 1px solid var(--color-border);
-      box-shadow: 0 2px 6px rgba(0, 47, 166, 0.08);
-    }
-
-    .brand-meta {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand-title {
-      font-weight: 700;
-      font-size: 0.98rem;
-      letter-spacing: -0.01em;
-      color: var(--color-text-primary);
-    }
-
-    .brand-subtitle {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      color: var(--color-blue);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    .nav-meta-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-    }
-
-    .nav-link {
-      font-size: 0.88rem;
-      color: var(--color-text-secondary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.15s ease;
-    }
-
-    .nav-link:hover {
-      color: var(--color-blue);
-    }
-
-    .status-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: var(--color-gold-bg);
-      border: 1px solid var(--color-gold-border);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--color-gold);
-      letter-spacing: 0.02em;
-    }
-
-    .status-pulse {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--color-gold-bright);
-      animation: pulseMarker 2s infinite ease-in-out;
-    }
-
-    /* Hero Section */
-    .hero-section {
-      padding: 96px 0 72px;
-      position: relative;
-    }
-
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.76rem;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--color-blue);
-      margin-bottom: 24px;
-    }
-
-    .hero-title {
-      font-family: var(--font-serif);
-      font-size: clamp(3.2rem, 6.5vw, 5.2rem);
-      font-weight: 400;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: var(--color-text-primary);
-      margin-bottom: 28px;
-      max-width: 920px;
-    }
-
-    .hero-title em {
-      font-style: italic;
-      color: var(--color-blue);
-    }
-
-    .hero-abstract {
-      font-size: clamp(1.05rem, 1.8vw, 1.22rem);
-      line-height: 1.65;
-      color: var(--color-text-secondary);
-      max-width: 780px;
-      margin-bottom: 48px;
-    }
-
-    .hero-abstract strong {
-      color: var(--color-text-primary);
-      font-weight: 600;
-    }
-
-    /* Live Cryptographic Lattice Canvas Visual */
-    .canvas-card {
-      position: relative;
-      width: 100%;
-      height: 280px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-      border: 1px solid var(--color-border);
-      overflow: hidden;
-      margin-bottom: 80px;
-    }
-
-    .canvas-element {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .canvas-overlay-caption {
-      position: absolute;
-      bottom: 14px;
-      left: 20px;
-      right: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--color-text-muted);
-      pointer-events: none;
-    }
-
-    .canvas-tag {
-      color: var(--color-blue);
-      font-weight: 600;
-    }
-
-    /* Research Pillars Grid */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 36px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .section-title {
-      font-family: var(--font-serif);
-      font-size: 2.2rem;
-      font-weight: 400;
-      color: var(--color-text-primary);
-      letter-spacing: -0.01em;
-    }
-
-    .section-index {
-      font-family: var(--font-mono);
-      font-size: 0.76rem;
-      color: var(--color-text-tertiary);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .pillars-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-bottom: 80px;
-    }
-
-    .pillar-card {
-      padding: 32px;
-      background: #ffffff;
-      border: 1px solid var(--color-border);
-      border-radius: 14px;
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .pillar-card:hover {
-      border-color: var(--color-blue);
-      box-shadow: 0 10px 30px rgba(0, 47, 166, 0.05);
-      transform: translateY(-2px);
-    }
-
-    .pillar-num {
-      font-family: var(--font-mono);
-      font-size: 0.74rem;
-      font-weight: 600;
-      color: var(--color-blue);
-      letter-spacing: 0.1em;
-      margin-bottom: 16px;
-    }
-
-    .pillar-heading {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--color-text-primary);
-      margin-bottom: 12px;
-    }
-
-    .pillar-desc {
-      font-size: 0.94rem;
-      color: var(--color-text-secondary);
-      line-height: 1.6;
-    }
-
-    .pillar-tech {
-      margin-top: 24px;
-      padding-top: 14px;
-      border-top: 1px solid var(--color-border-light);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--color-text-tertiary);
-    }
-
-    /* Specifications Table */
-    .specs-card {
-      background: var(--color-canvas-alt);
-      border: 1px solid var(--color-border);
-      border-radius: 16px;
-      padding: 36px 40px;
-      margin-bottom: 96px;
-    }
-
-    .specs-header {
-      margin-bottom: 28px;
-    }
-
-    .specs-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--color-text-primary);
-      margin-bottom: 6px;
-    }
-
-    .specs-sub {
-      font-size: 0.88rem;
-      color: var(--color-text-secondary);
-    }
-
-    .specs-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-    }
-
-    .specs-table tr {
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .specs-table tr:last-child {
-      border-bottom: none;
-    }
-
-    .specs-table td {
-      padding: 16px 0;
-    }
-
-    .spec-label {
-      color: var(--color-text-tertiary);
-      width: 40%;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-size: 0.75rem;
-    }
-
-    .spec-value {
-      color: var(--color-text-primary);
-      font-weight: 600;
-    }
-
-    .spec-hash {
-      color: var(--color-blue);
-      word-break: break-all;
-    }
-
-    /* Footer */
-    footer {
-      border-top: 1px solid var(--color-border);
-      padding: 48px 0 60px;
-      background: #ffffff;
-    }
-
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 32px;
-      flex-wrap: wrap;
-    }
-
-    .footer-col-brand {
-      max-width: 360px;
-    }
-
-    .footer-note {
-      font-size: 0.86rem;
-      color: var(--color-text-secondary);
-      margin-top: 10px;
-      line-height: 1.55;
-    }
-
-    .footer-links-group {
-      display: flex;
-      gap: 48px;
-    }
-
-    .footer-col-title {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--color-text-tertiary);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-
-    .footer-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .footer-list a {
-      font-size: 0.88rem;
-      color: var(--color-text-secondary);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-
-    .footer-list a:hover {
-      color: var(--color-blue);
-    }
-
-    .footer-bottom {
-      margin-top: 48px;
-      padding-top: 24px;
-      border-top: 1px solid var(--color-border-light);
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      color: var(--color-text-muted);
-      font-family: var(--font-mono);
-    }
-
-    /* Keyframes */
-    @keyframes pulseMarker {
-      0%, 100% { opacity: 0.5; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.3); }
-    }
-
-    /* Responsive */
-    @media (max-width: 820px) {
-      .pillars-grid {
-        grid-template-columns: 1fr;
-      }
-      .nav-meta-links {
-        display: none;
-      }
-      .hero-section {
-        padding: 56px 0 40px;
-      }
-      .specs-card {
-        padding: 24px 20px;
-      }
-      .specs-table td {
-        padding: 12px 0;
-      }
-      .footer-inner {
-        flex-direction: column;
-      }
-    }
-  </style>
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Resilience Network">
+<meta property="og:description" content="Resilience Network is an experimental proof-of-stake blockchain with BFT finality, an EVM execution layer, native account authorization and Orchard shielded transfers. Specifications, evidence and current status.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
 </head>
 <body>
-
-  <!-- Top Academic Navigation -->
-  <header>
-    <div class="container">
-      <div class="nav-inner">
-        <!-- Logo strictly used once here as requested -->
-        <a href="#" class="brand-identity" aria-label="Resilience Network Research Homepage">
-          <img src="logo.png" class="brand-logo-img" alt="Resilience Network Insignia">
-          <div class="brand-meta">
-            <span class="brand-title">Resilience Network</span>
-            <span class="brand-subtitle">Protocol Research &amp; Synthesis</span>
-          </div>
-        </a>
-
-        <div class="nav-meta-links">
-          <a href="https://github.com/Resilience-Network/Chain" class="nav-link" target="_blank" rel="noopener noreferrer">Source Code</a>
-          <a href="https://github.com/Resilience-Network/Chain/tree/main/docs" class="nav-link" target="_blank" rel="noopener noreferrer">Architecture Docs</a>
-          <div class="status-indicator">
-            <span class="status-pulse"></span>
-            <span>Pre-Mainnet Epoch 0</span>
-          </div>
-        </div>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <div>
+      <p class="kicker">Protocol research, pre-mainnet</p>
+      <h1 id="hero-title">An experimental proof&#8209;of&#8209;stake network, documented as it is.</h1>
+      <p class="lead">Resilience Network is a proof-of-stake blockchain written in Go and Rust. It combines BFT finality and secret leader election with an EVM execution layer, native account authorization, and Orchard shielded transfers. This site publishes its specifications, its evidence and its open problems, each tied to a specific revision.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/protocol/">Read the protocol</a>
+        <a class="btn btn-ghost" href="/status/">See current status</a>
       </div>
     </div>
-  </header>
-
-  <main class="container">
-    <!-- Hero Research Abstract -->
-    <section class="hero-section">
-      <div class="hero-eyebrow">// PROTOCOL RESEARCH &amp; SPECIFICATION</div>
-      
-      <h1 class="hero-title">
-        Something is <em>cooking</em> in the cryptography lab.
-      </h1>
-
-      <p class="hero-abstract">
-        <strong>Resilience Network</strong> is an experimental Proof-of-Stake state machine engineered for high-throughput verifiability, combining recursive zero-knowledge shielded state (Orchard) with deterministic EVM execution. A peer-reviewed cryptographic substrate for sovereign computation.
-      </p>
-
-      <!-- Interactive Mathematical Visualization: Halo 2 / Cryptographic Constraint Lattice -->
-      <div class="canvas-card" id="canvas-card">
-        <canvas id="lattice-canvas" class="canvas-element"></canvas>
-        <div class="canvas-overlay-caption">
-          <span class="canvas-tag">HALO-2 CONSTRAINT LATTICE &amp; STATE COMMITMENT MERKLE TREE</span>
-          <span id="live-block-stat">BLOCK #42,934 · STATE ROOT: 0x7f4c…e92a</span>
-        </div>
+    <aside class="manifest" aria-labelledby="manifest-title">
+      <div class="mh"><strong id="manifest-title">Protocol manifest r28</strong><span>Development genesis</span></div>
+      <p class="hl">Genesis protocol commitment, hexadecimal</p>
+      <div class="hash" aria-label="Genesis protocol commitment 0xcb4f7146ea76f23d2dbf1b5ba6087690f216a2be25e09270195efa27cbfffa8a">
+        <span>cb4f7146</span><span>ea76f23d</span><span>2dbf1b5b</span><span>a6087690</span>
+        <span>f216a2be</span><span>25e09270</span><span>195efa27</span><span>cbfffa8a</span>
       </div>
-    </section>
+      <p class="cap">The Keccak-256 hash of the compiled protocol manifest: domain strings, gas prices, action codes, revisions and size limits. A node refuses any genesis that commits to a different value.</p>
+      <dl>
+        <div><dt>Chain ID (development)</dt><dd>1337</dd></div>
+        <div><dt>Genesis validators</dt><dd>4</dd></div>
+        <div><dt>Slot target</dt><dd>2 s</dd></div>
+        <div><dt>Finality quorum</dt><dd>&gt;2/3 of stake</dd></div>
+      </dl>
+      <p class="mf">From <code class="src">configs/genesis.json</code> and <code class="src">configs/config.toml</code> at <code class="src">c3acec4</code>. A public network will publish its own commitment at its genesis ceremony.</p>
+    </aside>
+  </div>
+</section>
 
-    <!-- Four Research Pillars -->
-    <section>
-      <div class="section-header">
-        <h2 class="section-title">Architectural Pillars</h2>
-        <span class="section-index">Technical Tracks 01 — 04</span>
-      </div>
-
-      <div class="pillars-grid">
-        <!-- Pillar 1 -->
-        <div class="pillar-card">
-          <div>
-            <div class="pillar-num">TRACK 01 // ZERO-KNOWLEDGE STATE</div>
-            <h3 class="pillar-heading">Orchard Shielded Pools</h3>
-            <p class="pillar-desc">
-              Recursive zero-knowledge proof verification over the Pasta curve cycle (Pallas and Vesta), eliminating trusted setup ceremonies while guaranteeing unlinkable note commitments, nullifier derivation, and shielded value pools.
-            </p>
-          </div>
-          <div class="pillar-tech">HALO 2 · SINSEMILLA · NOTE ENCRYPTION AT REST</div>
-        </div>
-
-        <!-- Pillar 2 -->
-        <div class="pillar-card">
-          <div>
-            <div class="pillar-num">TRACK 02 // CONSENSUS &amp; FINALITY</div>
-            <h3 class="pillar-heading">Deterministic PoS Consensus</h3>
-            <p class="pillar-desc">
-              Byzantine fault-tolerant Proof-of-Stake engine enforcing single-slot deterministic finality. Incorporates stake-weighted quorum verification, cryptographic signing watermarks, and enshrined protocol slashing.
-            </p>
-          </div>
-          <div class="pillar-tech">SUB-2S FINALITY · ED25519 · WATERMARK BOUNDARIES</div>
-        </div>
-
-        <!-- Pillar 3 -->
-        <div class="pillar-card">
-          <div>
-            <div class="pillar-num">TRACK 03 // EXECUTION RUNTIME</div>
-            <h3 class="pillar-heading">Native EVM Engine</h3>
-            <p class="pillar-desc">
-              Full Ethereum Virtual Machine bytecode compatibility coupled with an optimized state-trie storage architecture. Precompiles for cryptographic verification allow seamless interaction with established developer tooling.
-            </p>
-          </div>
-          <div class="pillar-tech">CANCUN COMPATIBLE · STATE MERKLE TRIE · PRECOMPILES</div>
-        </div>
-
-        <!-- Pillar 4 -->
-        <div class="pillar-card">
-          <div>
-            <div class="pillar-num">TRACK 04 // IDENTITY &amp; SOVEREIGNTY</div>
-            <h3 class="pillar-heading">Guardian Social Recovery</h3>
-            <p class="pillar-desc">
-              Enshrined account sovereignty providing threshold session authorization, ephemeral signing delegation, and decentralized recovery boundaries without introducing custodial compromise or third-party relayers.
-            </p>
-          </div>
-          <div class="pillar-tech">THRESHOLD SIGNATURES · EPHEMERAL KEYS · SOCIAL RECOVERY</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Technical Specification Table -->
-    <section>
-      <div class="section-header">
-        <h2 class="section-title">Protocol Specification</h2>
-        <span class="section-index">Pre-Mainnet Manifest</span>
-      </div>
-
-      <div class="specs-card">
-        <div class="specs-header">
-          <h3 class="specs-title">Genesis Parameter Commitments</h3>
-          <p class="specs-sub">Verified against the reference implementation in Go and native Rust cryptographic primitives.</p>
-        </div>
-
-        <table class="specs-table">
-          <tbody>
-            <tr>
-              <td class="spec-label">Consensus Mechanism</td>
-              <td class="spec-value">Resilience Byzantine Fault-Tolerant PoS (2/3+1 Quorum)</td>
-            </tr>
-            <tr>
-              <td class="spec-label">Cryptographic Privacy Circuit</td>
-              <td class="spec-value">Halo 2 Plonkish Arithmetization (Pasta Curves)</td>
-            </tr>
-            <tr>
-              <td class="spec-label">Execution Environment</td>
-              <td class="spec-value">EVM Cancun Bytecode Compatible / State Snapshots</td>
-            </tr>
-            <tr>
-              <td class="spec-label">Hash Primitives</td>
-              <td class="spec-value">BLAKE3 (Internal State), Poseidon &amp; Sinsemilla (Circuits)</td>
-            </tr>
-            <tr>
-              <td class="spec-label">Deterministic Finality</td>
-              <td class="spec-value">&lt; 2.0s Single-Slot Finality Window</td>
-            </tr>
-            <tr>
-              <td class="spec-label">Genesis Codec Verification</td>
-              <td class="spec-hash">0x4a91b5c82e0d71ef…8390b14c771fae</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- Clean Academic Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-col-brand">
-          <div class="brand-title">Resilience Network Research</div>
-          <p class="footer-note">
-            An open-source, peer-reviewed distributed ledger exploring the intersection of zero-knowledge cryptography, Byzantine fault tolerance, and developer sovereignty.
-          </p>
-        </div>
-
-        <div class="footer-links-group">
-          <div>
-            <div class="footer-col-title">Repositories</div>
-            <ul class="footer-list">
-              <li><a href="https://github.com/Resilience-Network/Chain" target="_blank" rel="noopener noreferrer">Chain Core (Go)</a></li>
-              <li><a href="https://github.com/Resilience-Network/ResilienceNetwork.xyz" target="_blank" rel="noopener noreferrer">Web Portal</a></li>
-              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/reference" target="_blank" rel="noopener noreferrer">Reference Vectors</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <div class="footer-col-title">Documentation</div>
-            <ul class="footer-list">
-              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/architecture" target="_blank" rel="noopener noreferrer">Consensus Architecture</a></li>
-              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/architecture/shielded.md" target="_blank" rel="noopener noreferrer">Shielded State Specification</a></li>
-              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/reference/rpc.md" target="_blank" rel="noopener noreferrer">JSON-RPC Methods</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <div class="footer-col-title">Assurance</div>
-            <ul class="footer-list">
-              <li><a href="https://github.com/Resilience-Network/Chain/tree/main/docs/security" target="_blank" rel="noopener noreferrer">Security Index</a></li>
-              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribution Guidelines</a></li>
-              <li><a href="https://github.com/Resilience-Network/Chain/blob/main/AGENTS.md" target="_blank" rel="noopener noreferrer">Agent Instructions</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <span>© 2026 Resilience Network Research Foundation. All rights reserved.</span>
-        <span>Formal Verification · Proof-of-Stake · Orchard Privacy</span>
-      </div>
+<section class="band" aria-labelledby="defaults-title">
+  <div class="wrap">
+    <h2 id="defaults-title">Configured defaults</h2>
+    <p class="intro">Values from the reference configuration. They are targets and limits, not measured guarantees; measured behavior is on <a href="/assurance/#load">Assurance</a>.</p>
+    <div class="defaults">
+      <div><div class="v">2 s</div><div class="l">target slot duration</div></div>
+      <div><div class="v">192</div><div class="l">slots per epoch, 384 s at target</div></div>
+      <div><div class="v">128</div><div class="l">maximum active validators</div></div>
+      <div><div class="v">&gt;2/3</div><div class="l">voting power to finalize</div></div>
+      <div><div class="v">67</div><div class="l">registered JSON-RPC methods</div></div>
+      <div><div class="v">70</div><div class="l">live-network user stories</div></div>
     </div>
-  </footer>
+  </div>
+</section>
 
-  <!-- Interactive Cryptographic Lattice & Constraint Mesh Script -->
-  <script>
-    (function() {
-      const canvas = document.getElementById('lattice-canvas');
-      const ctx = canvas.getContext('2d');
-      const container = document.getElementById('canvas-card');
+<section class="band" aria-labelledby="families-title">
+  <div class="wrap split">
+    <header>
+      <h2 id="families-title">What the protocol does</h2>
+      <p>Six feature families, each with a specification page. The label says whether it is in the reference implementation, behind an activation switch, or still experimental.</p>
+    </header>
+    <ul class="register">
+      <li>
+        <h3><a href="/protocol/consensus/">BFT finality, secret leaders</a></h3>
+        <p>Durable locks and finality certificates. Proposers are chosen privately with an RFC 9381 verifiable random function, so nobody can read the schedule in advance.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/execution/">EVM execution</a></h3>
+        <p>An EVM with Shanghai semantics, differentially tested against go-ethereum. Design deviations are written down and pinned by tests.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/accounts/">Native account authorization</a></h3>
+        <p>Accounts keep one address while authority rotates: threshold root keys, expiring policy-bound session keys, P-256 passkey sessions.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/accounts/#recovery">Recovery, sponsorship, names</a></h3>
+        <p>Delayed guardian recovery, sponsored gas, and <code>.rsc</code> names registered by commit and reveal.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span><span class="badge b-plain">Names need activation</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/network/#staking">Delegation shares</a></h3>
+        <p>Validator-specific, non-rebasing delegation shares that can change hands, with a read-only vault interface for contracts.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span><span class="badge b-plain">Needs activation</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/privacy/">Orchard shielded transfers</a></h3>
+        <p>Real Halo 2 proofs verified in consensus, with no trusted setup. Off for the first public testnet until an external audit.</p>
+        <div class="st"><span class="badge b-exp">Experimental</span></div>
+      </li>
+    </ul>
+  </div>
+</section>
 
-      let width = (canvas.width = container.clientWidth);
-      let height = (canvas.height = container.clientHeight);
+<section class="band alt" aria-labelledby="not-title">
+  <div class="wrap">
+    <h2 id="not-title">What this is not, yet</h2>
+    <p class="intro">Five things people reasonably assume about a new chain that are not true of this one today.</p>
+    <div class="nots">
+      <div><h3>Not live</h3><p>There is no public testnet or mainnet. Development networks run on test hardware.</p></div>
+      <div><h3>Not externally audited</h3><p>Every review to date is internal. The shielded layer must pass an independent audit before it handles value.</p></div>
+      <div><h3>Not Ethereum wire-compatible</h3><p>RPC method names are familiar, but transactions use the chain's own V2 format. Ethereum wallets cannot sign them.</p></div>
+      <div><h3>Not a token offering</h3><p>RSC is the protocol's native unit for fees, staking and rewards. Nothing here is an offer or a price.</p></div>
+      <div><h3>Not a finality promise</h3><p>Two seconds is a slot target. Measured behavior under load is published on <a href="/assurance/#load">Assurance</a>.</p></div>
+    </div>
+  </div>
+</section>
 
-      window.addEventListener('resize', () => {
-        width = canvas.width = container.clientWidth;
-        height = canvas.height = container.clientHeight;
-        initNodes();
-      });
+<section class="band" aria-labelledby="start-title">
+  <div class="wrap">
+    <h2 id="start-title">Where to start</h2>
+    <p class="intro">Suggested reading order by what you came to do.</p>
+    <div class="paths">
+      <a class="path" href="/protocol/consensus/"><span class="who">Protocol researchers</span><span class="route">Consensus, then Privacy, then Decisions</span></a>
+      <a class="path" href="/status/"><span class="who">Prospective validators</span><span class="route">Status, then Network and economics, then load results</span></a>
+      <a class="path" href="/developers/"><span class="who">Wallet and dApp developers</span><span class="route">Developers, then Accounts, then Execution</span></a>
+      <a class="path" href="/assurance/"><span class="who">Security reviewers</span><span class="route">Assurance, then Security and disclosure</span></a>
+    </div>
+  </div>
+</section>
 
-      // Nodes representing polynomial constraints and state commitments
-      const NODE_COUNT = 42;
-      let nodes = [];
+<section class="band" aria-labelledby="log-title">
+  <div class="wrap split">
+    <header>
+      <h2 id="log-title">Latest from the log</h2>
+      <p>Protocol revisions, reviews and measurements, newest first. <a href="/log/">Read the full log</a>.</p>
+    </header>
+    <div class="table-wrap"><table class="log">
+      <thead><tr><th scope="col">Date</th><th scope="col">Entry</th></tr></thead>
+      <tbody>
+        <tr><td>2026-10-13</td><td>Internal security review of <code class="src">ef16072</code>, dated 2026-10-12, added to the record. Open availability findings block the public testnet.</td></tr>
+        <tr><td>2026-10-09</td><td>Public testnet launch procedure defined: transparent-only, shielded transfers off.</td></tr>
+        <tr><td>2026-10-08</td><td>Manifest r28. Delayed consensus rounds now catch up from authenticated peer progress.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
 
-      let mouse = { x: width / 2, y: height / 2, active: false };
-
-      container.addEventListener('pointermove', (e) => {
-        const rect = container.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
-        mouse.active = true;
-      });
-
-      container.addEventListener('pointerleave', () => {
-        mouse.active = false;
-      });
-
-      function initNodes() {
-        nodes = [];
-        for (let i = 0; i < NODE_COUNT; i++) {
-          nodes.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.45,
-            vy: (Math.random() - 0.5) * 0.45,
-            radius: Math.random() > 0.85 ? 3.5 : 2,
-            isCommitment: Math.random() > 0.75, // Halo 2 commitment proof node
-            label: Math.random() > 0.88 ? `ω^${Math.floor(Math.random() * 64)}` : null
-          });
-        }
-      }
-      initNodes();
-
-      function draw() {
-        ctx.clearRect(0, 0, width, height);
-
-        // Subtle background coordinates grid
-        ctx.strokeStyle = 'rgba(0, 47, 166, 0.04)';
-        ctx.lineWidth = 1;
-        const step = 40;
-        for (let x = 0; x < width; x += step) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, height);
-          ctx.stroke();
-        }
-        for (let y = 0; y < height; y += step) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(width, y);
-          ctx.stroke();
-        }
-
-        // Draw constraint lattice connections
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const dx = nodes[i].x - nodes[j].x;
-            const dy = nodes[i].y - nodes[j].y;
-            const dist = Math.hypot(dx, dy);
-
-            if (dist < 120) {
-              const alpha = (1 - dist / 120) * 0.22;
-              ctx.strokeStyle = `rgba(0, 47, 166, ${alpha})`;
-              ctx.lineWidth = 0.8;
-              ctx.beginPath();
-              ctx.moveTo(nodes[i].x, nodes[i].y);
-              ctx.lineTo(nodes[j].x, nodes[j].y);
-              ctx.stroke();
-            }
-          }
-        }
-
-        // Mouse gravitational attraction
-        if (mouse.active) {
-          for (let node of nodes) {
-            const dx = mouse.x - node.x;
-            const dy = mouse.y - node.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 140) {
-              const force = (1 - dist / 140) * 0.02;
-              node.vx += dx * force;
-              node.vy += dy * force;
-            }
-          }
-        }
-
-        // Update & draw nodes
-        for (let node of nodes) {
-          node.x += node.vx;
-          node.y += node.vy;
-
-          // Boundary bouncing
-          if (node.x < 10 || node.x > width - 10) node.vx *= -1;
-          if (node.y < 10 || node.y > height - 10) node.vy *= -1;
-
-          // Gentle drag
-          node.vx *= 0.99;
-          node.vy *= 0.99;
-
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-          if (node.isCommitment) {
-            ctx.fillStyle = '#b45309'; // Warm amber gold commitment
-          } else {
-            ctx.fillStyle = '#002fa6'; // Royal blue constraint node
-          }
-          ctx.fill();
-
-          if (node.label) {
-            ctx.font = '10px JetBrains Mono, monospace';
-            ctx.fillStyle = 'rgba(71, 85, 105, 0.6)';
-            ctx.fillText(node.label, node.x + 6, node.y + 3);
-          }
-        }
-
-        requestAnimationFrame(draw);
-      }
-      draw();
-
-      // Dynamic simulated block ticker
-      let block = 42934;
-      const blockEl = document.getElementById('live-block-stat');
-      setInterval(() => {
-        block += Math.floor(Math.random() * 2) + 1;
-        const hex = Math.random().toString(16).substr(2, 4);
-        blockEl.textContent = `BLOCK #${block.toLocaleString()} · STATE ROOT: 0x7f4c…${hex}`;
-      }, 2600);
-    })();
-  </script>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
 </body>
 </html>

@@ -1,0 +1,99 @@
+<!--meta
+{"path": "protocol/execution/", "title": "Execution, fees and the EVM", "nav": "protocol",
+ "h1": "Execution, fees and the EVM",
+ "lead": "Every block is executed in full by every validator. Transactions use one format from genesis, Transaction V2. Fees follow an EIP-1559-style base fee that is burned. The EVM follows Shanghai semantics, and every known difference from go-ethereum is written down and pinned by a test.",
+ "crumbs": [["Protocol", "/protocol/"], ["Execution", "/protocol/execution/"]],
+ "badge": "<span class=\"badge b-impl\">Implemented</span>",
+ "description": "Resilience Network execution: Transaction V2, failure semantics, the EIP-1559-style fee market, EVM compatibility and documented deviations, precompiles, limits and storage.",
+ "pager": {"prev": ["Consensus", "/protocol/consensus/"], "next": ["Accounts", "/protocol/accounts/"]},
+ "cite": true,
+ "sources": "<code class=\"src\">internal/state/transition_v2.go</code>, <code class=\"src\">internal/state/basefee.go</code>, <code class=\"src\">internal/vm/evm.go</code>, <code class=\"src\">internal/vm/gas.go</code>, <code class=\"src\">internal/vm/precompiles.go</code>; EVM differential specification; decision records on ECRecover and SELFDESTRUCT."}
+-->
+<section id="v2">
+<h2>Transaction V2</h2>
+<p>V2 separates the <strong>signed intent</strong>, which says what to do with which nonce, fee caps and optional sponsor, from the <strong>authorization envelope</strong>, which says who authorizes it (DIRECT, ROOT or SESSION) and carries the witnesses. Signatures bind the chain and the genesis, so a transaction cannot be replayed on another network. Transparent transactions have no other format and no legacy decoder; shielded transactions use their own native envelope.</p>
+<p>Native actions include transfer, contract call and creation, stake, unstake, delegate, claim rewards, share transfer, name operations, and the authorization and recovery controls described on <a href="/protocol/accounts/">Accounts</a>.</p>
+</section>
+
+<section id="failure">
+<h2>Two kinds of failure</h2>
+<table>
+<thead><tr><th scope="col">Situation</th><th scope="col">Result</th></tr></thead>
+<tbody>
+<tr><td>Malformed, unauthorized, or over a consensus limit</td><td>The transaction is invalid, and a block that contains it is rejected.</td></tr>
+<tr><td>Valid and authorized, but the action fails (revert, out of gas)</td><td>Included with a failed receipt. Nonce and fees are consumed; the action's effects are rolled back, including authorization and shielded records.</td></tr>
+</tbody>
+</table>
+<p>A proposer skips a candidate that does not fit the current block's budget without evicting it from the pool.</p>
+</section>
+
+<section id="fees">
+<h2>Fee market</h2>
+<pre><code>effective price = min(max fee, base fee + priority fee cap)
+actual fee      = effective price × gas used
+burned          = base fee × gas used
+proposer tip    = actual fee − burned</code></pre>
+<table class="params">
+<thead><tr><th scope="col">Parameter</th><th scope="col">Value</th></tr></thead>
+<tbody>
+<tr><td>Block gas limit</td><td>30,000,000</td></tr>
+<tr><td>Target utilization</td><td>half the gas limit</td></tr>
+<tr><td>Largest base-fee change per block</td><td>1/8</td></tr>
+<tr><td>Initial base fee in the reference code</td><td>10<sup>9</sup> base units per gas (<code class="src">internal/state/basefee.go</code>)</td></tr>
+<tr><td>Unit</td><td>1 RSC = 10<sup>18</sup> base units</td></tr>
+</tbody>
+</table>
+<p>The sender reserves max fee × gas limit before execution, and settlement charges actual use. Shielded transactions declare a flat fee that is converted to base units, checked against a fixed gas charge, and split into burn and tip the same way. In the EVM, <code>BASEFEE</code> returns the header base fee and <code>GASPRICE</code> the effective price. The <code>eth_gasPrice</code>, <code>eth_maxPriorityFeePerGas</code> and <code>eth_feeHistory</code> methods report this market; it does not imply Ethereum transaction-wire compatibility.</p>
+</section>
+
+<section id="evm">
+<h2>EVM compatibility</h2>
+<p>The interpreter targets the Shanghai rule set. It is tested against go-ethereum on seeded random programs, on stateful random programs, and on the Ethereum state-test corpus. The harness fails on any divergence that is not recorded as a design deviation or a filed bug. Some state-test residue is still being classified.</p>
+<table>
+<thead><tr><th scope="col">Deviation</th><th scope="col">What differs</th><th scope="col">Why</th></tr></thead>
+<tbody>
+<tr><td>Precompile subset</td><td>Only 0x01–0x04 from Ethereum: ECRecover, SHA-256, RIPEMD-160, identity. No modexp, BN254 pairing or BLAKE2.</td><td>A smaller surface to review; native features replace common uses</td></tr>
+<tr><td>ECRecover price</td><td>9,000 gas instead of 3,000</td><td>Pure-Go recovery measured at about 184 µs; at 3,000 gas a block of recoveries would take about 1.8 s of a 2 s slot</td></tr>
+<tr><td>SELFDESTRUCT</td><td>Sweeps the balance to the beneficiary; never deletes code, storage, nonce or account, even in the creating transaction</td><td>One canonical rule and no deletion primitive in state</td></tr>
+<tr><td>Native precompiles</td><td>0x100–0x104 are specific to this chain</td><td>P-256 verification, names, staking reads</td></tr>
+<tr><td>Top-level creation address</td><td>Derived from the authorization mode, credential, authorization epoch and nonce, not from the account's creator nonce</td><td>The V2 authorization model</td></tr>
+</tbody>
+</table>
+<div class="note"><span class="t">Porting note</span><p>Contracts that verify Groth16 or PLONK proofs with BN254 pairings, that use modexp, or that rely on metamorphic SELFDESTRUCT patterns will not behave as on Ethereum. Gas estimates for <code>ecrecover</code> are three times Ethereum's.</p></div>
+</section>
+
+<section id="precompiles">
+<h2>Precompiles</h2>
+<table>
+<thead><tr><th scope="col">Address</th><th scope="col">Name</th><th scope="col">Gas</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td><code>0x01</code></td><td>ECRecover</td><td class="num">9,000</td><td>Output identical to go-ethereum</td></tr>
+<tr><td><code>0x02</code></td><td>SHA-256</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x03</code></td><td>RIPEMD-160</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x04</code></td><td>Identity</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x100</code></td><td>P256VERIFY</td><td class="num">6,900</td><td>EIP-7951 interface; 160-byte input; charged on failure too</td></tr>
+<tr><td><code>0x101</code></td><td>Name resolve</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x102</code></td><td>Name reverse</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x103</code></td><td>Name owner</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x104</code></td><td>Stake vault</td><td class="num">3,000</td><td>Read-only: <code>balanceOf</code>, <code>totalSupply</code>, <code>totalAssets</code>, <code>convertToAssets</code>, <code>convertToShares</code>, <code>exchangeRate</code></td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="limits">
+<h2>Limits and gas details</h2>
+<ul>
+<li>Runtime code up to 24,576 bytes; EIP-3860 init-code metering and cap; code deposit 200 gas per byte.</li>
+<li>Call depth of 1,025 nested frames: entry at depth 1024 is allowed, entry past it fails.</li>
+<li>SSTORE net metering with EIP-3529 refunds and EIP-2929 access costs. The transaction beneficiary is warm from the start.</li>
+<li>The full unused CALL stipend is returned to the caller.</li>
+<li>Runtime code that starts with <code>0xEF</code> is rejected at deployment.</li>
+<li>Worst adversarial family: about 0.76 s projected for a 30-million-gas block on the calibration host. See <a href="/assurance/#gas-time">Assurance</a>.</li>
+</ul>
+</section>
+
+<section id="state">
+<h2>State and storage</h2>
+<p>State lives in a persistent authenticated trie over BadgerDB. Account and storage changes are journaled, and a revert restores everything, including authorization and shielded records. A block and its state commit in one atomic batch: if the disk is full, the whole commit fails without moving the head, and the node reopens cleanly once space returns.</p>
+<p>When shielded transfers are active, their state is part of the effective state root. A snapshot file carries no trust by itself; bootstrapping from one requires certification against a live peer's header.</p>
+</section>

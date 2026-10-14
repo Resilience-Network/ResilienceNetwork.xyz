@@ -1,15 +1,14 @@
-## Description
-<!-- Summary of changes made in this PR -->
+## What changed
 
-## Type of Change
-- [ ] New feature / UI component (`feat`)
-- [ ] Visual refinement / styling (`style`)
-- [ ] Bug fix (`fix`)
-- [ ] Documentation update (`docs`)
-- [ ] Maintenance / tooling (`chore`)
+<!-- Pages and sections touched -->
+
+## Source for any numbers or claims
+
+<!-- Chain revision and the documents or files used -->
 
 ## Verification
-<!-- How did you test these changes? E.g., static server check, browser rendering -->
-- [ ] Tested locally via `python3 -m http.server`
-- [ ] Verified responsive layout (mobile / tablet / desktop)
-- [ ] Checked browser console for errors or unhandled warnings
+
+- [ ] `python3 tools/build.py` run and generated files committed
+- [ ] Internal links and fragments checked
+- [ ] Checked at 375, 768 and 1280 px; no horizontal scroll
+- [ ] No console errors

@@ -1,0 +1,90 @@
+<!--meta
+{"path": "decisions/", "title": "Design decisions", "nav": "decisions",
+ "h1": "Design decisions",
+ "lead": "Specifications say what the protocol does. Decision records say why, what else was considered, and what the choice costs. Each record carries a status: proposed, accepted, or superseded.",
+ "crumbs": [["Decisions", "/decisions/"]],
+ "numbered": false,
+ "description": "Resilience Network design decisions: session authorization V1, genesis-native formats, the proposed threshold randomness beacon, ECRecover repricing, sweep-only SELFDESTRUCT, plaintext mempool disclosure and anchor peer sampling.",
+ "sources": "Decision records in the reference implementation's documentation, with their linked specifications and simulations."}
+-->
+<section id="index">
+<h2>Index</h2>
+<table>
+<thead><tr><th scope="col">Record</th><th scope="col">Status</th><th scope="col">Date</th></tr></thead>
+<tbody>
+<tr><td><a href="#session-auth">D1. Session authorization V1</a></td><td><span class="badge b-prop">Candidate</span> not approved for production</td><td>Protocol 0.2.0, 2026-09-09</td></tr>
+<tr><td><a href="#genesis">D2. Genesis-native formats, no migrations</a></td><td><span class="badge b-impl">Accepted</span></td><td>2026-10-01</td></tr>
+<tr><td><a href="#beacon">D3. Unbiasable randomness beacon</a></td><td><span class="badge b-prop">Proposed</span></td><td>2026-09-17</td></tr>
+<tr><td><a href="#ecrecover">D4. ECRecover repriced to 9,000 gas</a></td><td><span class="badge b-impl">Accepted</span></td><td>2026-09-26</td></tr>
+<tr><td><a href="#selfdestruct">D5. SELFDESTRUCT sweeps only</a></td><td><span class="badge b-impl">Accepted</span></td><td>2026-09-26</td></tr>
+<tr><td><a href="#mempool">D6. Plaintext mempool, disclosed</a></td><td><span class="badge b-impl">Accepted</span></td><td>2026-09-26</td></tr>
+<tr><td><a href="#peers">D7. Anchor-authenticated peer sampling</a></td><td><span class="badge b-prop">Proposed</span></td><td>2026-09-30</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="session-auth">
+<h2>D1. Session authorization V1</h2>
+<p><strong>Principles.</strong> Authorization is deterministic, bounded, non-programmable and visible to consensus. One value has exactly one encoding. Worst-case work is charged before expensive work starts. New authority is delayed, while revocation takes effect as soon as it is finalized. Root, session, validator and network keys stay separate roles.</p>
+<table>
+<thead><tr><th scope="col">ID</th><th scope="col">Decision</th><th scope="col">Reason</th></tr></thead>
+<tbody>
+<tr><td>D-01</td><td>Keccak-256 with original padding, with a unique domain label per construction</td><td>Reuse one reviewed primitive; known-answer tests catch an accidental SHA3-256 substitution</td></tr>
+<tr><td>D-02</td><td>Ed25519 everywhere; P-256 for session keys only</td><td>One verification core shared with the EVM precompile; passkeys without changing any other key type</td></tr>
+<tr><td>D-03</td><td>A root witness carries exactly <em>threshold</em> signatures, sorted by key ID</td><td>Predictable cost and size, and no alternative signed representations</td></tr>
+<tr><td>D-06, D-07</td><td>One account format from genesis; no compatibility with prototype state</td><td>No dual decoders or lazy migration in consensus code</td></tr>
+<tr><td>§5</td><td>A refundable grant deposit instead of recurring state rent</td><td>Owners pay for the state they occupy, and a cleanup bounty clears expired grants</td></tr>
+<tr><td>§13</td><td>A security reserve that only ROOT can spend</td><td>An emergency revocation is always affordable</td></tr>
+</tbody>
+</table>
+<p>Guardian recovery was excluded from V1 by decision D-16.1 and later added as a separate, delayed, opt-in extension.</p>
+</section>
+
+<section id="genesis">
+<h2>D2. Genesis-native formats</h2>
+<p><strong>Decision.</strong> Reject incompatible state instead of rewriting identity or inferring missing fields. Historical manifests, metadata rewriting and share-less staking interpretations were removed. A semantic change requires a coordinated fresh genesis; a restart on the same protocol reuses existing data and signing records.</p>
+<p><strong>Cost.</strong> No in-place upgrades during development. Upgrades after a production genesis will need explicit migration specifications.</p>
+</section>
+
+<section id="beacon">
+<h2>D3. Unbiasable randomness beacon</h2>
+<p><span class="badge b-prop">Proposed</span></p>
+<p><strong>Problem.</strong> Today's beacon is the winning proposer's VRF output. A winner who dislikes its output can withhold the block and get one retry, which turns a fair coin into a 3/4 coin. Contracts therefore must not read the beacon, and an EVM randomness precompile stays blocked.</p>
+<p><strong>Proposal.</strong> A threshold beacon with <em>t</em> = <em>f</em> + 1 of <em>n</em> = 3<em>f</em> + 1, to be built as threshold BLS with distributed key generation. Any <em>t</em> shares reconstruct the same output, so a Byzantine minority has no alternative to steer toward. Fewer than <em>t</em> shares reveal nothing about it.</p>
+<table>
+<thead><tr><th scope="col">Simulation</th><th scope="col">Result</th><th scope="col">Expected</th></tr></thead>
+<tbody>
+<tr><td>Current beacon, one withholding proposer</td><td>3,014 of 4,000 wins (0.754)</td><td>About 0.75: biasable</td></tr>
+<tr><td>Commit-reveal, last revealer withholds</td><td>2,971 of 4,000 (0.743)</td><td>About 0.75: one bit of choice kept</td></tr>
+<tr><td>Threshold beacon, Byzantine minority</td><td>Identical output in 200 of 200 epochs</td><td>Exact: unbiasable</td></tr>
+<tr><td>Threshold beacon, prediction below threshold</td><td>997 of 2,000 (0.499)</td><td>About 0.50: no signal</td></tr>
+</tbody>
+</table>
+<p><strong>Status.</strong> A prototype uses Shamir sharing over the Mersenne field 2<sup>127</sup> − 1 and proves uniqueness, hiding and quorum agreement. Nothing in consensus imports it yet; key generation, share authentication and transport remain.</p>
+</section>
+
+<section id="ecrecover">
+<h2>D4. ECRecover at 9,000 gas</h2>
+<p><strong>Context.</strong> Recovery in pure Go costs about 184 µs. At Ethereum's 3,000 gas, a block full of recoveries burns about 1.8 s of a 2 s slot, leaving no time for gossip, signatures or commit.</p>
+<p><strong>Decision.</strong> Price it at 9,000 gas, so a saturated block costs about 0.61 s. Output and success behavior stay identical to go-ethereum; only the price differs. Manifest revision 24.</p>
+<p><strong>Rejected.</strong> Halving the block gas limit, which penalizes every workload; per-attempt pricing, which adds consensus surface for no measured benefit; keeping 3,000 gas, which risks missed slots.</p>
+</section>
+
+<section id="selfdestruct">
+<h2>D5. SELFDESTRUCT sweeps only</h2>
+<p><strong>Decision.</strong> SELFDESTRUCT moves the contract's full balance to the beneficiary and halts. Code, storage, nonce and the account always survive, even for a contract created in the same transaction.</p>
+<p><strong>Rejected.</strong> Pre-Cancun full deletion, which Ethereum itself abandoned and which would need a new deletion primitive in state. EIP-6780 same-transaction deletion, which needs the same machinery and state-root churn, and imports Cancun semantics onto a Shanghai opcode surface for one narrow edge case.</p>
+</section>
+
+<section id="mempool">
+<h2>D6. Plaintext mempool, disclosed</h2>
+<p><strong>Decision.</strong> Pending transactions stay readable by any peer, and block ordering stays a local convention: control transactions first, then nonce-sequenced fee priority. Integrators are told to use slippage bounds, deadline heights and private submission where available, and never to put secrets in calldata.</p>
+<p><strong>Deferred.</strong> A threshold-encrypted mempool and commit-reveal ordering; each needs its own protocol proposal. <strong>Rejected.</strong> A consensus-enforced ordering rule, which would turn benign deviations into faults without stopping a Byzantine proposer.</p>
+</section>
+
+<section id="peers">
+<h2>D7. Anchor-authenticated peer sampling</h2>
+<p><span class="badge b-prop">Proposed</span></p>
+<p><strong>Problem.</strong> A node that loses its anchors has no other way to find peers on the open internet.</p>
+<p><strong>Decision.</strong> Connected anchors that passed the compatibility handshake may refer up to 16 live peers each, at most two per subnet, leased for one hour. There is no DNS, no transitive referral and no persistent referral cache. This is bounded sampling, not a claim of Sybil resistance.</p>
+</section>

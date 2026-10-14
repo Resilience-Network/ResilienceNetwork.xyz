@@ -1,0 +1,69 @@
+<!--meta
+{"path": "status/", "title": "Current status", "nav": "status",
+ "h1": "Current status",
+ "lead": "Resilience Network is pre-mainnet and has no public testnet. The next milestone is a transparent-only public testnet with shielded transfers off. It launches only after its release gates close, and we will not publish a date until they do.",
+ "crumbs": [["Status", "/status/"]],
+ "asof": "Status as of 2026-10-13, reference implementation <code class=\"src\">c3acec4</code>, protocol manifest r28.",
+ "description": "What Resilience Network implements today, what is experimental or proposed, what the first public testnet will enable, the release gates before testnet and mainnet, and known limits.",
+ "sources": "Feature reference; public testnet launch procedure; configuration reference; internal security review of 2026-10-12."}
+-->
+<section id="matrix">
+<h2>Capability matrix</h2>
+<table>
+<thead><tr><th scope="col">Capability</th><th scope="col">State</th><th scope="col">Activation</th><th scope="col">First public testnet</th></tr></thead>
+<tbody>
+<tr><td><a href="/protocol/consensus/">BFT consensus, ECVRF leader election</a></td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td>Forced evidence inclusion, slashing, jailing</td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td><a href="/protocol/accounts/">Transaction V2 with DIRECT, ROOT and SESSION authority</a></td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td>P-256 session keys and the P256VERIFY precompile</td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td><a href="/protocol/execution/#fees">EIP-1559-style fee market</a></td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td><a href="/protocol/execution/#evm">EVM, Shanghai semantics with documented deviations</a></td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td>Sponsored transactions</td><td><span class="badge b-impl">Implemented</span></td><td>Always on</td><td>On</td></tr>
+<tr><td>Guardian recovery</td><td><span class="badge b-impl">Implemented</span></td><td>Always on, opt-in per account</td><td>On</td></tr>
+<tr><td><code>.rsc</code> names</td><td><span class="badge b-impl">Implemented</span></td><td><code>name_service_activation_height</code></td><td>To be decided</td></tr>
+<tr><td>Delegation share transfers and vault reads</td><td><span class="badge b-impl">Implemented</span></td><td><code>liquid_staking_activation_height</code></td><td>To be decided</td></tr>
+<tr><td><a href="/protocol/privacy/">Orchard shielded transfers</a></td><td><span class="badge b-exp">Experimental</span></td><td>Activation height plus an explicit acknowledgment</td><td>Off</td></tr>
+<tr><td>Remote signer over mutual TLS; encrypted keystore</td><td><span class="badge b-impl">Implemented</span></td><td>Operator choice</td><td>Available; open key-custody finding on the remote signer</td></tr>
+<tr><td>Certified snapshot bootstrap</td><td><span class="badge b-impl">Implemented</span></td><td>Operator choice</td><td>Available</td></tr>
+<tr><td><a href="/decisions/#beacon">Unbiasable threshold randomness beacon</a></td><td><span class="badge b-prop">Proposed</span></td><td></td><td>No</td></tr>
+<tr><td>EVM randomness precompile</td><td><span class="badge b-plain">Blocked on the beacon</span></td><td></td><td>No</td></tr>
+<tr><td><a href="/decisions/#mempool">Encrypted mempool or other MEV protection</a></td><td><span class="badge b-plain">Deferred by decision</span></td><td></td><td>No</td></tr>
+<tr><td>Hardware-wallet support</td><td><span class="badge b-no">Not implemented</span></td><td></td><td>No</td></tr>
+<tr><td>HSM or KMS validator signing</td><td><span class="badge b-no">Not implemented</span></td><td></td><td>No</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="gates">
+<h2>Release gates</h2>
+<h3>Before a public transparent testnet</h3>
+<ul class="gates">
+<li>Close or contain the open availability and key-custody findings from the 2026-10-12 internal review.</li>
+<li>Measure sustained load again after the 2026-10-08 liveness fix, on uncontended hardware.</li>
+<li>Run the full native story suite and a mixed fault campaign of at least four hours on the exact public profile.</li>
+<li>Exercise multi-host seed discovery, restart on retained storage, storage-failure recovery, and clock and network behavior.</li>
+<li>Deliver a test alert end to end through the intended notification route.</li>
+<li>Complete the robustness re-review.</li>
+</ul>
+<h3>Before mainnet or any network that carries value</h3>
+<ul class="gates">
+<li>Independent external audits of the protocol and, separately, of the shielded cryptography, with their findings fixed.</li>
+<li>Gas and authorization schedules frozen after measurement on the minimum supported validator hardware.</li>
+<li>A reviewed production custody path for validator keys.</li>
+<li>A public genesis ceremony with a published commitment and allocation.</li>
+<li>An adversarial public testnet period and a bug bounty.</li>
+</ul>
+</section>
+
+<section id="limits">
+<h2>Known limits today</h2>
+<ul>
+<li>The planning ceiling is 20 TPS sustained until load is measured again.</li>
+<li>Slot duration is a target. Finality time under load is measured, not guaranteed.</li>
+<li>Pending transactions are public and block ordering is a local convention, so front-running is possible.</li>
+<li>Light clients trust the validator set on first contact.</li>
+<li>A withholding proposer can bias the randomness beacon, so contracts cannot read it.</li>
+<li>A snapshot file carries no trust until it is certified against a live peer.</li>
+<li>A protocol change requires a coordinated fresh genesis; there are no in-place migrations.</li>
+</ul>
+</section>

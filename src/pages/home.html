@@ -1,0 +1,133 @@
+<!--meta
+{"path": "", "title": "Resilience Network", "layout": "raw", "nav": "",
+ "description": "Resilience Network is an experimental proof-of-stake blockchain with BFT finality, an EVM execution layer, native account authorization and Orchard shielded transfers. Specifications, evidence and current status."}
+-->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <div>
+      <p class="kicker">Protocol research, pre-mainnet</p>
+      <h1 id="hero-title">An experimental proof&#8209;of&#8209;stake network, documented as it is.</h1>
+      <p class="lead">Resilience Network is a proof-of-stake blockchain written in Go and Rust. It combines BFT finality and secret leader election with an EVM execution layer, native account authorization, and Orchard shielded transfers. This site publishes its specifications, its evidence and its open problems, each tied to a specific revision.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/protocol/">Read the protocol</a>
+        <a class="btn btn-ghost" href="/status/">See current status</a>
+      </div>
+    </div>
+    <aside class="manifest" aria-labelledby="manifest-title">
+      <div class="mh"><strong id="manifest-title">Protocol manifest r28</strong><span>Development genesis</span></div>
+      <p class="hl">Genesis protocol commitment, hexadecimal</p>
+      <div class="hash" aria-label="Genesis protocol commitment 0xcb4f7146ea76f23d2dbf1b5ba6087690f216a2be25e09270195efa27cbfffa8a">
+        <span>cb4f7146</span><span>ea76f23d</span><span>2dbf1b5b</span><span>a6087690</span>
+        <span>f216a2be</span><span>25e09270</span><span>195efa27</span><span>cbfffa8a</span>
+      </div>
+      <p class="cap">The Keccak-256 hash of the compiled protocol manifest: domain strings, gas prices, action codes, revisions and size limits. A node refuses any genesis that commits to a different value.</p>
+      <dl>
+        <div><dt>Chain ID (development)</dt><dd>1337</dd></div>
+        <div><dt>Genesis validators</dt><dd>4</dd></div>
+        <div><dt>Slot target</dt><dd>2 s</dd></div>
+        <div><dt>Finality quorum</dt><dd>&gt;2/3 of stake</dd></div>
+      </dl>
+      <p class="mf">From <code class="src">configs/genesis.json</code> and <code class="src">configs/config.toml</code> at <code class="src">c3acec4</code>. A public network will publish its own commitment at its genesis ceremony.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="defaults-title">
+  <div class="wrap">
+    <h2 id="defaults-title">Configured defaults</h2>
+    <p class="intro">Values from the reference configuration. They are targets and limits, not measured guarantees; measured behavior is on <a href="/assurance/#load">Assurance</a>.</p>
+    <div class="defaults">
+      <div><div class="v">2 s</div><div class="l">target slot duration</div></div>
+      <div><div class="v">192</div><div class="l">slots per epoch, 384 s at target</div></div>
+      <div><div class="v">128</div><div class="l">maximum active validators</div></div>
+      <div><div class="v">&gt;2/3</div><div class="l">voting power to finalize</div></div>
+      <div><div class="v">67</div><div class="l">registered JSON-RPC methods</div></div>
+      <div><div class="v">70</div><div class="l">live-network user stories</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="families-title">
+  <div class="wrap split">
+    <header>
+      <h2 id="families-title">What the protocol does</h2>
+      <p>Six feature families, each with a specification page. The label says whether it is in the reference implementation, behind an activation switch, or still experimental.</p>
+    </header>
+    <ul class="register">
+      <li>
+        <h3><a href="/protocol/consensus/">BFT finality, secret leaders</a></h3>
+        <p>Durable locks and finality certificates. Proposers are chosen privately with an RFC 9381 verifiable random function, so nobody can read the schedule in advance.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/execution/">EVM execution</a></h3>
+        <p>An EVM with Shanghai semantics, differentially tested against go-ethereum. Design deviations are written down and pinned by tests.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/accounts/">Native account authorization</a></h3>
+        <p>Accounts keep one address while authority rotates: threshold root keys, expiring policy-bound session keys, P-256 passkey sessions.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/accounts/#recovery">Recovery, sponsorship, names</a></h3>
+        <p>Delayed guardian recovery, sponsored gas, and <code>.rsc</code> names registered by commit and reveal.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span><span class="badge b-plain">Names need activation</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/network/#staking">Delegation shares</a></h3>
+        <p>Validator-specific, non-rebasing delegation shares that can change hands, with a read-only vault interface for contracts.</p>
+        <div class="st"><span class="badge b-impl">Implemented</span><span class="badge b-plain">Needs activation</span></div>
+      </li>
+      <li>
+        <h3><a href="/protocol/privacy/">Orchard shielded transfers</a></h3>
+        <p>Real Halo 2 proofs verified in consensus, with no trusted setup. Off for the first public testnet until an external audit.</p>
+        <div class="st"><span class="badge b-exp">Experimental</span></div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="band alt" aria-labelledby="not-title">
+  <div class="wrap">
+    <h2 id="not-title">What this is not, yet</h2>
+    <p class="intro">Five things people reasonably assume about a new chain that are not true of this one today.</p>
+    <div class="nots">
+      <div><h3>Not live</h3><p>There is no public testnet or mainnet. Development networks run on test hardware.</p></div>
+      <div><h3>Not externally audited</h3><p>Every review to date is internal. The shielded layer must pass an independent audit before it handles value.</p></div>
+      <div><h3>Not Ethereum wire-compatible</h3><p>RPC method names are familiar, but transactions use the chain's own V2 format. Ethereum wallets cannot sign them.</p></div>
+      <div><h3>Not a token offering</h3><p>RSC is the protocol's native unit for fees, staking and rewards. Nothing here is an offer or a price.</p></div>
+      <div><h3>Not a finality promise</h3><p>Two seconds is a slot target. Measured behavior under load is published on <a href="/assurance/#load">Assurance</a>.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="start-title">
+  <div class="wrap">
+    <h2 id="start-title">Where to start</h2>
+    <p class="intro">Suggested reading order by what you came to do.</p>
+    <div class="paths">
+      <a class="path" href="/protocol/consensus/"><span class="who">Protocol researchers</span><span class="route">Consensus, then Privacy, then Decisions</span></a>
+      <a class="path" href="/status/"><span class="who">Prospective validators</span><span class="route">Status, then Network and economics, then load results</span></a>
+      <a class="path" href="/developers/"><span class="who">Wallet and dApp developers</span><span class="route">Developers, then Accounts, then Execution</span></a>
+      <a class="path" href="/assurance/"><span class="who">Security reviewers</span><span class="route">Assurance, then Security and disclosure</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="log-title">
+  <div class="wrap split">
+    <header>
+      <h2 id="log-title">Latest from the log</h2>
+      <p>Protocol revisions, reviews and measurements, newest first. <a href="/log/">Read the full log</a>.</p>
+    </header>
+    <table class="log">
+      <thead><tr><th scope="col">Date</th><th scope="col">Entry</th></tr></thead>
+      <tbody>
+        <tr><td>2026-10-13</td><td>Internal security review of <code class="src">ef16072</code>, dated 2026-10-12, added to the record. Open availability findings block the public testnet.</td></tr>
+        <tr><td>2026-10-09</td><td>Public testnet launch procedure defined: transparent-only, shielded transfers off.</td></tr>
+        <tr><td>2026-10-08</td><td>Manifest r28. Delayed consensus rounds now catch up from authenticated peer progress.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
