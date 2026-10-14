@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Execution, fees and the EVM | Resilience Network</title>
+<meta name="description" content="Resilience Network execution: Transaction V2, failure semantics, the EIP-1559-style fee market, EVM compatibility and documented deviations, precompiles, limits and storage.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/protocol/execution/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Execution, fees and the EVM | Resilience Network">
+<meta property="og:description" content="Resilience Network execution: Transaction V2, failure semantics, the EIP-1559-style fee market, EVM compatibility and documented deviations, precompiles, limits and storage.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/protocol/execution/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/" class="is-section">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/protocol/">Protocol</a> / <a href="/protocol/execution/">Execution</a></div>
+    <span class="badge b-impl">Implemented</span>
+    <h1>Execution, fees and the EVM</h1>
+    <p class="lead">Every block is executed in full by every validator. Transactions use one format from genesis, Transaction V2. Fees follow an EIP-1559-style base fee that is burned. The EVM follows Shanghai semantics, and every known difference from go-ethereum is written down and pinned by a test.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#v2"><span class="n">§1</span><span>Transaction V2</span></a></li><li><a href="#failure"><span class="n">§2</span><span>Two kinds of failure</span></a></li><li><a href="#fees"><span class="n">§3</span><span>Fee market</span></a></li><li><a href="#evm"><span class="n">§4</span><span>EVM compatibility</span></a></li><li><a href="#precompiles"><span class="n">§5</span><span>Precompiles</span></a></li><li><a href="#limits"><span class="n">§6</span><span>Limits and gas details</span></a></li><li><a href="#state"><span class="n">§7</span><span>State and storage</span></a></li></ol><div class="pager"><a href="/protocol/consensus/">Previous: Consensus</a><a href="/protocol/accounts/">Next: Accounts</a></div></nav>
+    <article class="prose">
+<section id="v2">
+<h2><span class="n">§1</span>Transaction V2<a class="anchor" href="#v2" aria-label="Link to this section">#</a></h2>
+<p>V2 separates the <strong>signed intent</strong>, which says what to do with which nonce, fee caps and optional sponsor, from the <strong>authorization envelope</strong>, which says who authorizes it (DIRECT, ROOT or SESSION) and carries the witnesses. Signatures bind the chain and the genesis, so a transaction cannot be replayed on another network. Transparent transactions have no other format and no legacy decoder; shielded transactions use their own native envelope.</p>
+<p>Native actions include transfer, contract call and creation, stake, unstake, delegate, claim rewards, share transfer, name operations, and the authorization and recovery controls described on <a href="/protocol/accounts/">Accounts</a>.</p>
+</section>
+
+<section id="failure">
+<h2><span class="n">§2</span>Two kinds of failure<a class="anchor" href="#failure" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Situation</th><th scope="col">Result</th></tr></thead>
+<tbody>
+<tr><td>Malformed, unauthorized, or over a consensus limit</td><td>The transaction is invalid, and a block that contains it is rejected.</td></tr>
+<tr><td>Valid and authorized, but the action fails (revert, out of gas)</td><td>Included with a failed receipt. Nonce and fees are consumed; the action's effects are rolled back, including authorization and shielded records.</td></tr>
+</tbody>
+</table></div>
+<p>A proposer skips a candidate that does not fit the current block's budget without evicting it from the pool.</p>
+</section>
+
+<section id="fees">
+<h2><span class="n">§3</span>Fee market<a class="anchor" href="#fees" aria-label="Link to this section">#</a></h2>
+<pre><code>effective price = min(max fee, base fee + priority fee cap)
+actual fee      = effective price × gas used
+burned          = base fee × gas used
+proposer tip    = actual fee − burned</code></pre>
+<div class="table-wrap"><table class="params">
+<thead><tr><th scope="col">Parameter</th><th scope="col">Value</th></tr></thead>
+<tbody>
+<tr><td>Block gas limit</td><td>30,000,000</td></tr>
+<tr><td>Target utilization</td><td>half the gas limit</td></tr>
+<tr><td>Largest base-fee change per block</td><td>1/8</td></tr>
+<tr><td>Initial base fee in the reference code</td><td>10<sup>9</sup> base units per gas (<code class="src">internal/state/basefee.go</code>)</td></tr>
+<tr><td>Unit</td><td>1 RSC = 10<sup>18</sup> base units</td></tr>
+</tbody>
+</table></div>
+<p>The sender reserves max fee × gas limit before execution, and settlement charges actual use. Shielded transactions declare a flat fee that is converted to base units, checked against a fixed gas charge, and split into burn and tip the same way. In the EVM, <code>BASEFEE</code> returns the header base fee and <code>GASPRICE</code> the effective price. The <code>eth_gasPrice</code>, <code>eth_maxPriorityFeePerGas</code> and <code>eth_feeHistory</code> methods report this market; it does not imply Ethereum transaction-wire compatibility.</p>
+</section>
+
+<section id="evm">
+<h2><span class="n">§4</span>EVM compatibility<a class="anchor" href="#evm" aria-label="Link to this section">#</a></h2>
+<p>The interpreter targets the Shanghai rule set. It is tested against go-ethereum on seeded random programs, on stateful random programs, and on the Ethereum state-test corpus. The harness fails on any divergence that is not recorded as a design deviation or a filed bug. Some state-test residue is still being classified.</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Deviation</th><th scope="col">What differs</th><th scope="col">Why</th></tr></thead>
+<tbody>
+<tr><td>Precompile subset</td><td>Only 0x01–0x04 from Ethereum: ECRecover, SHA-256, RIPEMD-160, identity. No modexp, BN254 pairing or BLAKE2.</td><td>A smaller surface to review; native features replace common uses</td></tr>
+<tr><td>ECRecover price</td><td>9,000 gas instead of 3,000</td><td>Pure-Go recovery measured at about 184 µs; at 3,000 gas a block of recoveries would take about 1.8 s of a 2 s slot</td></tr>
+<tr><td>SELFDESTRUCT</td><td>Sweeps the balance to the beneficiary; never deletes code, storage, nonce or account, even in the creating transaction</td><td>One canonical rule and no deletion primitive in state</td></tr>
+<tr><td>Native precompiles</td><td>0x100–0x104 are specific to this chain</td><td>P-256 verification, names, staking reads</td></tr>
+<tr><td>Top-level creation address</td><td>Derived from the authorization mode, credential, authorization epoch and nonce, not from the account's creator nonce</td><td>The V2 authorization model</td></tr>
+</tbody>
+</table></div>
+<div class="note"><span class="t">Porting note</span><p>Contracts that verify Groth16 or PLONK proofs with BN254 pairings, that use modexp, or that rely on metamorphic SELFDESTRUCT patterns will not behave as on Ethereum. Gas estimates for <code>ecrecover</code> are three times Ethereum's.</p></div>
+</section>
+
+<section id="precompiles">
+<h2><span class="n">§5</span>Precompiles<a class="anchor" href="#precompiles" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Address</th><th scope="col">Name</th><th scope="col">Gas</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td><code>0x01</code></td><td>ECRecover</td><td class="num">9,000</td><td>Output identical to go-ethereum</td></tr>
+<tr><td><code>0x02</code></td><td>SHA-256</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x03</code></td><td>RIPEMD-160</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x04</code></td><td>Identity</td><td class="num">Ethereum</td><td></td></tr>
+<tr><td><code>0x100</code></td><td>P256VERIFY</td><td class="num">6,900</td><td>EIP-7951 interface; 160-byte input; charged on failure too</td></tr>
+<tr><td><code>0x101</code></td><td>Name resolve</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x102</code></td><td>Name reverse</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x103</code></td><td>Name owner</td><td class="num">stateful</td><td>Active when names are enabled</td></tr>
+<tr><td><code>0x104</code></td><td>Stake vault</td><td class="num">3,000</td><td>Read-only: <code>balanceOf</code>, <code>totalSupply</code>, <code>totalAssets</code>, <code>convertToAssets</code>, <code>convertToShares</code>, <code>exchangeRate</code></td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="limits">
+<h2><span class="n">§6</span>Limits and gas details<a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Runtime code up to 24,576 bytes; EIP-3860 init-code metering and cap; code deposit 200 gas per byte.</li>
+<li>Call depth of 1,025 nested frames: entry at depth 1024 is allowed, entry past it fails.</li>
+<li>SSTORE net metering with EIP-3529 refunds and EIP-2929 access costs. The transaction beneficiary is warm from the start.</li>
+<li>The full unused CALL stipend is returned to the caller.</li>
+<li>Runtime code that starts with <code>0xEF</code> is rejected at deployment.</li>
+<li>Worst adversarial family: about 0.76 s projected for a 30-million-gas block on the calibration host. See <a href="/assurance/#gas-time">Assurance</a>.</li>
+</ul>
+</section>
+
+<section id="state">
+<h2><span class="n">§7</span>State and storage<a class="anchor" href="#state" aria-label="Link to this section">#</a></h2>
+<p>State lives in a persistent authenticated trie over BadgerDB. Account and storage changes are journaled, and a revert restores everything, including authorization and shielded records. A block and its state commit in one atomic batch: if the disk is full, the whole commit fails without moving the head, and the node reopens cleanly once space returns.</p>
+<p>When shielded transfers are active, their state is part of the effective state root. A snapshot file carries no trust by itself; bootstrapping from one requires certification against a live peer's header.</p>
+</section>
+
+<p class="sources">Sources: <code class="src">internal/state/transition_v2.go</code>, <code class="src">internal/state/basefee.go</code>, <code class="src">internal/vm/evm.go</code>, <code class="src">internal/vm/gas.go</code>, <code class="src">internal/vm/precompiles.go</code>; EVM differential specification; decision records on ECRecover and SELFDESTRUCT.</p><details class="cite">
+<summary>Cite this page</summary>
+<pre><code>@misc{resilience-protocol-execution,
+  title  = {{Execution, fees and the EVM}},
+  author = {{Resilience Network}},
+  year   = {2026},
+  note   = {Reference implementation c3acec4, protocol manifest r28},
+  url    = {https://resiliencenetwork.xyz/protocol/execution/}
+}</code></pre>
+</details>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

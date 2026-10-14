@@ -1,0 +1,32 @@
+<!--meta
+{"path": "glossary/", "title": "Glossary", "nav": "",
+ "h1": "Glossary",
+ "lead": "Terms as this site uses them.",
+ "crumbs": [["Glossary", "/glossary/"]],
+ "toc": false,
+ "description": "Definitions of the consensus, authorization and privacy terms used on the Resilience Network site."}
+-->
+<section id="terms" data-unnumbered>
+<h2>Terms</h2>
+<dl class="terms">
+<div id="anchor"><dt>Anchor (peers)</dt><dd>A configured bootstrap peer treated as a trust root for connectivity. Protected from pruning and watched for eclipse.</dd></div>
+<div id="anchor-shielded"><dt>Anchor (shielded)</dt><dd>A recent root of the note-commitment tree that a spend proves membership against.</dd></div>
+<div id="base-fee"><dt>Base fee</dt><dd>The per-gas price the protocol sets from the parent block's utilization. Burned.</dd></div>
+<div id="certificate"><dt>Certificate</dt><dd>Signatures from validators holding more than two thirds of voting power, for one block in one view.</dd></div>
+<div id="compact-block"><dt>Compact block</dt><dd>A scan-only summary of a block's shielded data, which a wallet authenticates against the block header.</dd></div>
+<div id="control"><dt>Control transaction</dt><dd>An authorization change: grant, revoke, rotate root, set reserve. Ordered before user transactions in every block.</dd></div>
+<div id="modes"><dt>DIRECT, ROOT, SESSION</dt><dd>The three authority modes: one address key, a threshold of root keys, or a policy-bound session key.</dd></div>
+<div id="epoch"><dt>Epoch</dt><dd>192 slots by default. Validator sets and rewards change at epoch boundaries.</dd></div>
+<div id="equivocation"><dt>Equivocation</dt><dd>A validator signing two conflicting messages for the same view. Slashable.</dd></div>
+<div id="grant"><dt>Grant</dt><dd>An on-chain record that authorizes one session key under one policy for a range of block heights.</dd></div>
+<div id="lock"><dt>Lock</dt><dd>A validator's durable commitment to a block it precommitted. Survives restarts and is released only by a newer certificate.</dd></div>
+<div id="manifest"><dt>Manifest and commitment</dt><dd>The canonical list of consensus constants, and its Keccak-256 hash written into genesis.</dd></div>
+<div id="nullifier"><dt>Nullifier</dt><dd>A unique tag published when a shielded note is spent. A repeated nullifier is a double spend.</dd></div>
+<div id="policy"><dt>Policy</dt><dd>The built-in rules a session's actions must satisfy. It never executes contract code.</dd></div>
+<div id="reserve"><dt>Security reserve</dt><dd>Balance that sessions cannot touch, kept for emergency root actions.</dd></div>
+<div id="slot"><dt>Slot, round, view</dt><dd>A slot is a 2 s timing unit with up to 3 rounds; a view is a (slot, round) pair.</dd></div>
+<div id="turnstile"><dt>Turnstile</dt><dd>The public accounting of value entering and leaving the shielded pool.</dd></div>
+<div id="vrf"><dt>VRF</dt><dd>Verifiable random function: each validator's private lottery for proposing, with a public proof.</dd></div>
+<div id="watermark"><dt>Watermark</dt><dd>A persisted record of the highest view a validator has signed, used to refuse anything conflicting or older.</dd></div>
+</dl>
+</section>

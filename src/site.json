@@ -1,0 +1,18 @@
+{
+  "origin": "https://resiliencenetwork.xyz",
+  "revision": "c3acec4",
+  "revision_date": "2026-10-13",
+  "manifest": 28,
+  "commitment": "0xcb4f7146ea76f23d2dbf1b5ba6087690f216a2be25e09270195efa27cbfffa8a",
+  "site_date": "2026-10-15",
+  "asset_version": "20261015",
+  "contact": "dev.durgeshkhade@gmail.com",
+  "description": "Resilience Network is an experimental proof-of-stake blockchain with BFT finality, an EVM execution layer, native account authorization and Orchard shielded transfers. Specifications, evidence and current status.",
+  "redirects": {
+    "protocol.html": ["/protocol/", "Protocol"],
+    "research.html": ["/assurance/", "Assurance"],
+    "status.html": ["/status/", "Status"],
+    "decisions.html": ["/decisions/", "Decisions"],
+    "get-started.html": ["/developers/", "Developers"]
+  }
+}

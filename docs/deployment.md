@@ -1,79 +1,22 @@
-# Deployment Guide
+# Deployment and verification
 
-This guide details the hosting options and continuous delivery configuration for `ResilienceNetwork.xyz`.
+## Hosting
 
----
+The site is static. Serve the repository root as-is; no build runs at deploy time. Any static host works (Cloudflare Pages or Workers static assets, GitHub Pages, S3 and a CDN). The host must:
 
-## 1. Static Hosting Options
+- serve `index.html` for directory paths such as `/protocol/consensus/`;
+- serve `404.html` for missing paths;
+- serve `/.well-known/security.txt` as `text/plain`.
 
-Since the website is entirely static (HTML, CSS, JS), it can be deployed with zero backend dependencies on:
-- **GitHub Pages** (Default)
-- **Cloudflare Pages**
-- **Vercel**
-- **AWS S3 + CloudFront**
+`src/`, `tools/` and `docs/` are published along with the site. They contain nothing private, but a host can exclude them.
 
----
+## Redirects
 
-## 2. GitHub Pages Configuration
+The previous site's addresses (`protocol.html`, `research.html`, `status.html`, `decisions.html`, `get-started.html`) are generated as small pages that redirect immediately, configured in `src/site.json`. A host-level 301 can replace them later.
 
-### Automated Deployment via GitHub Actions
-Create a `.github/workflows/deploy.yml` file to deploy on push to `main`:
+## Before merging
 
-```yaml
-name: Deploy Static Website to GitHub Pages
-
-on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-```
-
----
-
-## 3. Custom Domain Setup (`resiliencenetwork.xyz`)
-
-To link the custom domain:
-
-1. Add a `CNAME` file in the root directory:
-   ```text
-   resiliencenetwork.xyz
-   ```
-2. Configure DNS A Records with your domain registrar:
-   - `185.199.108.153`
-   - `185.199.109.153`
-   - `185.199.110.153`
-   - `185.199.111.153`
-3. Configure CNAME Record for `www`:
-   - `www` -> `<username>.github.io`
-4. In GitHub Repository Settings -> Pages, enable **Enforce HTTPS**.
+1. `python3 tools/build.py`
+2. `python3 -m http.server 8000`, then check every touched page at 375, 768 and 1280 px.
+3. Check internal links and fragments. Any HTML link checker works; the build output has no external links except fonts and `mailto:`.
+4. Confirm no console errors and no horizontal scroll.

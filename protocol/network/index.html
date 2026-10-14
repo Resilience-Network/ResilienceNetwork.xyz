@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Networking, staking and economics | Resilience Network</title>
+<meta name="description" content="Resilience Network peer-to-peer layer, anchors and eclipse monitoring, staking and transferable delegation shares, issuance, burns, slashing and public RPC limits.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/protocol/network/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Networking, staking and economics | Resilience Network">
+<meta property="og:description" content="Resilience Network peer-to-peer layer, anchors and eclipse monitoring, staking and transferable delegation shares, issuance, burns, slashing and public RPC limits.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/protocol/network/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/" class="is-section">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/protocol/">Protocol</a> / <a href="/protocol/network/">Network and economics</a></div>
+    <span class="badge b-impl">Implemented</span>
+    <h1>Networking, staking and economics</h1>
+    <p class="lead">Nodes connect over libp2p with GossipSub and join through operator-chosen anchor peers, which act as trust roots. RSC pays for gas, secures staking and is issued as block rewards. The values below are development defaults; a public genesis will fix its own.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#p2p"><span class="n">§1</span><span>Peer-to-peer layer</span></a></li><li><a href="#staking"><span class="n">§2</span><span>Staking</span></a></li><li><a href="#economics"><span class="n">§3</span><span>Issuance, burns and penalties</span></a></li><li><a href="#rpc"><span class="n">§4</span><span>Public RPC</span></a></li></ol><div class="pager"><a href="/protocol/privacy/">Previous: Privacy</a><a href="/assurance/">Next: Assurance</a></div></nav>
+    <article class="prose">
+<section id="p2p">
+<h2><span class="n">§1</span>Peer-to-peer layer<a class="anchor" href="#p2p" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Mechanism</th><th scope="col">Behavior</th></tr></thead>
+<tbody>
+<tr><td>Transport</td><td>libp2p host. GossipSub carries transactions, proposals, votes and evidence; direct streams carry sync.</td></tr>
+<tr><td>Compatibility</td><td>The handshake binds chain ID, genesis and consensus commitment. Mismatched nodes never connect.</td></tr>
+<tr><td>Discovery</td><td>Configured bootstrap peers, plus bounded referrals from up to 16 connected anchors. No DHT and no DNS discovery; mDNS on the local link only.</td></tr>
+<tr><td>Anchors</td><td>Every bootstrap peer is an anchor: protected from pruning and redialed in rotation. Operators should configure at least two, on different operators and subnets.</td></tr>
+<tr><td>Eclipse monitor</td><td>Checks anchor, outbound and peer-floor health every 15 s. When unhealthy it forces an anchor redial and raises an alert; it never sheds peers automatically.</td></tr>
+<tr><td>Diversity</td><td>50 peers by default, at most 2 per subnet.</td></tr>
+<tr><td>Reconnect</td><td>A lost bootstrap peer is redialed after 1 s; checks run every 5 s while below 3 peers.</td></tr>
+<tr><td>Peer scoring</td><td>Penalties for corrupt data (−100) and each false height claim (−15), decaying over time; misbehaving peers are banned.</td></tr>
+<tr><td>Sync</td><td>Finalized blocks only, each re-verified by the importer, with budgeted frames and a throughput floor.</td></tr>
+<tr><td>Snapshot bootstrap</td><td>A head installed from a snapshot was never executed locally, so forward sync waits until it is certified against a live peer's header.</td></tr>
+</tbody>
+</table></div>
+<p>Safety does not depend on the network: an imported block always passes through the finalized-block importer. Liveness does, which is why availability is the current focus of review. See <a href="/assurance/#reviews">review history</a>.</p>
+</section>
+
+<section id="staking">
+<h2><span class="n">§2</span>Staking<a class="anchor" href="#staking" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Validators</strong> stake at least 10,000 RSC and join the active set, up to 128, at the next epoch boundary.</li>
+<li><strong>Delegators</strong> delegate to a validator and receive non-rebasing, validator-specific shares. A share is worth the pool's tokens divided by its outstanding shares.</li>
+<li><strong>Share transfer</strong> moves shares between holders without minting, burning or moving pool tokens. A holder can hold one validator's shares at a time, active validators cannot receive them, and sessions cannot transfer them.</li>
+<li><strong>Unbonding</strong> takes 14 epochs. Earned time weight survives transfers and full exits, and slashing continues to apply to the underlying pool.</li>
+<li><strong>Vault interface:</strong> precompile <code>0x104</code> exposes ERC-4626-style reads for contracts. It is not an ERC-20 token: there is no approve, transfer or allowance.</li>
+</ul>
+</section>
+
+<section id="economics">
+<h2><span class="n">§3</span>Issuance, burns and penalties<a class="anchor" href="#economics" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Flow</th><th scope="col">Rule</th></tr></thead>
+<tbody>
+<tr><td>Block reward</td><td>About 0.667 RSC per block, set so that 2 RSC are issued per 6 s of wall-clock at the 2 s target</td></tr>
+<tr><td>Reward split</td><td>Per epoch, by participation and time-weighted delegation</td></tr>
+<tr><td>Base fee</td><td>Burned</td></tr>
+<tr><td>Priority tip</td><td>Paid to the proposer</td></tr>
+<tr><td>Name registration and renewal</td><td>Burned, from 500 down to 5 RSC by label length</td></tr>
+<tr><td>Grant deposits</td><td>Locked and refunded, not burned</td></tr>
+<tr><td>Double signing</td><td>5% of stake slashed</td></tr>
+<tr><td>Downtime</td><td>0.1% slashed and jailed, judged by the signed ratio over a 300-block participation window</td></tr>
+</tbody>
+</table></div>
+<div class="note"><span class="t">Not yet defined</span><p>No public genesis allocation, supply schedule or distribution has been defined. Any future one will be published here before a public network launches.</p></div>
+</section>
+
+<section id="rpc">
+<h2><span class="n">§4</span>Public RPC<a class="anchor" href="#rpc" aria-label="Link to this section">#</a></h2>
+<p>Node defaults limit each client IP to 100 requests per second (burst 200) and 10 submissions per second (burst 20); submissions count against both. Public endpoints sit behind a TLS reverse proxy that owns per-client limits, because a node behind a proxy cannot tell clients apart. Whatever the per-client limits, the aggregate must stay under the chain's measured ceiling.</p>
+</section>
+
+<p class="sources">Sources: <code class="src">internal/p2p</code>, <code class="src">internal/txpool</code>, <code class="src">internal/state/liquid_staking.go</code>, <code class="src">internal/consensus/rewards.go</code>, <code class="src">configs/config.toml</code>; node operation guide; P2P threat model.</p><details class="cite">
+<summary>Cite this page</summary>
+<pre><code>@misc{resilience-protocol-network,
+  title  = {{Networking, staking and economics}},
+  author = {{Resilience Network}},
+  year   = {2026},
+  note   = {Reference implementation c3acec4, protocol manifest r28},
+  url    = {https://resiliencenetwork.xyz/protocol/network/}
+}</code></pre>
+</details>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

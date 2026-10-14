@@ -1,0 +1,64 @@
+<!--meta
+{"path": "protocol/network/", "title": "Networking, staking and economics", "nav": "protocol",
+ "h1": "Networking, staking and economics",
+ "lead": "Nodes connect over libp2p with GossipSub and join through operator-chosen anchor peers, which act as trust roots. RSC pays for gas, secures staking and is issued as block rewards. The values below are development defaults; a public genesis will fix its own.",
+ "crumbs": [["Protocol", "/protocol/"], ["Network and economics", "/protocol/network/"]],
+ "badge": "<span class=\"badge b-impl\">Implemented</span>",
+ "description": "Resilience Network peer-to-peer layer, anchors and eclipse monitoring, staking and transferable delegation shares, issuance, burns, slashing and public RPC limits.",
+ "pager": {"prev": ["Privacy", "/protocol/privacy/"], "next": ["Assurance", "/assurance/"]},
+ "cite": true,
+ "sources": "<code class=\"src\">internal/p2p</code>, <code class=\"src\">internal/txpool</code>, <code class=\"src\">internal/state/liquid_staking.go</code>, <code class=\"src\">internal/consensus/rewards.go</code>, <code class=\"src\">configs/config.toml</code>; node operation guide; P2P threat model."}
+-->
+<section id="p2p">
+<h2>Peer-to-peer layer</h2>
+<table>
+<thead><tr><th scope="col">Mechanism</th><th scope="col">Behavior</th></tr></thead>
+<tbody>
+<tr><td>Transport</td><td>libp2p host. GossipSub carries transactions, proposals, votes and evidence; direct streams carry sync.</td></tr>
+<tr><td>Compatibility</td><td>The handshake binds chain ID, genesis and consensus commitment. Mismatched nodes never connect.</td></tr>
+<tr><td>Discovery</td><td>Configured bootstrap peers, plus bounded referrals from up to 16 connected anchors. No DHT and no DNS discovery; mDNS on the local link only.</td></tr>
+<tr><td>Anchors</td><td>Every bootstrap peer is an anchor: protected from pruning and redialed in rotation. Operators should configure at least two, on different operators and subnets.</td></tr>
+<tr><td>Eclipse monitor</td><td>Checks anchor, outbound and peer-floor health every 15 s. When unhealthy it forces an anchor redial and raises an alert; it never sheds peers automatically.</td></tr>
+<tr><td>Diversity</td><td>50 peers by default, at most 2 per subnet.</td></tr>
+<tr><td>Reconnect</td><td>A lost bootstrap peer is redialed after 1 s; checks run every 5 s while below 3 peers.</td></tr>
+<tr><td>Peer scoring</td><td>Penalties for corrupt data (−100) and each false height claim (−15), decaying over time; misbehaving peers are banned.</td></tr>
+<tr><td>Sync</td><td>Finalized blocks only, each re-verified by the importer, with budgeted frames and a throughput floor.</td></tr>
+<tr><td>Snapshot bootstrap</td><td>A head installed from a snapshot was never executed locally, so forward sync waits until it is certified against a live peer's header.</td></tr>
+</tbody>
+</table>
+<p>Safety does not depend on the network: an imported block always passes through the finalized-block importer. Liveness does, which is why availability is the current focus of review. See <a href="/assurance/#reviews">review history</a>.</p>
+</section>
+
+<section id="staking">
+<h2>Staking</h2>
+<ul>
+<li><strong>Validators</strong> stake at least 10,000 RSC and join the active set, up to 128, at the next epoch boundary.</li>
+<li><strong>Delegators</strong> delegate to a validator and receive non-rebasing, validator-specific shares. A share is worth the pool's tokens divided by its outstanding shares.</li>
+<li><strong>Share transfer</strong> moves shares between holders without minting, burning or moving pool tokens. A holder can hold one validator's shares at a time, active validators cannot receive them, and sessions cannot transfer them.</li>
+<li><strong>Unbonding</strong> takes 14 epochs. Earned time weight survives transfers and full exits, and slashing continues to apply to the underlying pool.</li>
+<li><strong>Vault interface:</strong> precompile <code>0x104</code> exposes ERC-4626-style reads for contracts. It is not an ERC-20 token: there is no approve, transfer or allowance.</li>
+</ul>
+</section>
+
+<section id="economics">
+<h2>Issuance, burns and penalties</h2>
+<table>
+<thead><tr><th scope="col">Flow</th><th scope="col">Rule</th></tr></thead>
+<tbody>
+<tr><td>Block reward</td><td>About 0.667 RSC per block, set so that 2 RSC are issued per 6 s of wall-clock at the 2 s target</td></tr>
+<tr><td>Reward split</td><td>Per epoch, by participation and time-weighted delegation</td></tr>
+<tr><td>Base fee</td><td>Burned</td></tr>
+<tr><td>Priority tip</td><td>Paid to the proposer</td></tr>
+<tr><td>Name registration and renewal</td><td>Burned, from 500 down to 5 RSC by label length</td></tr>
+<tr><td>Grant deposits</td><td>Locked and refunded, not burned</td></tr>
+<tr><td>Double signing</td><td>5% of stake slashed</td></tr>
+<tr><td>Downtime</td><td>0.1% slashed and jailed, judged by the signed ratio over a 300-block participation window</td></tr>
+</tbody>
+</table>
+<div class="note"><span class="t">Not yet defined</span><p>No public genesis allocation, supply schedule or distribution has been defined. Any future one will be published here before a public network launches.</p></div>
+</section>
+
+<section id="rpc">
+<h2>Public RPC</h2>
+<p>Node defaults limit each client IP to 100 requests per second (burst 200) and 10 submissions per second (burst 20); submissions count against both. Public endpoints sit behind a TLS reverse proxy that owns per-client limits, because a node behind a proxy cannot tell clients apart. Whatever the per-client limits, the aggregate must stay under the chain's measured ceiling.</p>
+</section>

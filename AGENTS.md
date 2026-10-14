@@ -1,29 +1,28 @@
-# Agent Instructions
+# Agent instructions
 
-## Required Workflow
+## Required workflow
 
-- **Never commit directly to `main`**. Always use a dedicated topic branch (e.g. `feature/<name>`, `docs/<name>`, `style/<name>`, `chore/<name>`) and submit changes through `gh pr create`; merge only after review and verification pass.
-- Follow [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, PR conventions, and commit formatting.
-- Inspect the working tree before editing. Preserve unrelated changes, assets, and documentation.
+- Never commit directly to `main`. Use a topic branch (`feature/`, `fix/`, `docs/`, `style/`, `chore/`) and merge through a pull request after review and verification.
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md) for branch names, commit messages and pull requests.
+- Inspect the working tree before editing. Preserve unrelated changes and assets.
 
-## Start with Relevant Context
+## How the site is built
 
-- Read [docs/README.md](docs/README.md) for an overview of the website structure and architecture.
-- Review [docs/architecture.md](docs/architecture.md) for the design token system, animations, and canvas mechanics.
-- Check [docs/deployment.md](docs/deployment.md) for hosting and domain configurations.
+- Pages are fragments in `src/pages/`; shared facts live in `src/site.json`. Never edit generated HTML directly: run `python3 tools/build.py` and commit source and output together.
+- Light mode only. Do not add a dark theme, glow effects or decorative animation.
+- No frameworks or npm dependencies. HTML, one stylesheet and one small script. Every page must read fully without JavaScript.
+- Read [docs/architecture.md](docs/architecture.md) before changing styles and [docs/content.md](docs/content.md) before changing any claim.
 
-## Development & Design Discipline
+## Content discipline
 
-- **Pure & Lightweight**: Prioritize clean, semantic HTML5, Vanilla CSS custom properties, and performant Vanilla JavaScript. Avoid introducing heavy external frameworks or dependencies unless explicitly requested.
-- **Rich Aesthetics**: Maintain the modern dark mode design system, glowing gradients, glassmorphism, responsive typography, and 60fps micro-animations.
-- **Accessibility & SEO**: Ensure valid semantic structure (`<header>`, `<main>`, `<footer>`, single `<h1>`), accessible ARIA attributes, and accurate metadata.
-- **Zero Broken Links / Placeholders**: Never leave placeholder images or dead links.
+- Every number and claim must match the chain repository at the revision named in `src/site.json`. If you cannot find a source, do not publish the claim.
+- Label claims with the status badges defined in `docs/content.md`. Internal reviews are never called audits.
+- The chain repository is private: refer to source files as plain `<code class="src">path</code>` text, not links.
+- Security findings appear as posture only (counts and areas) until fixes ship.
 
 ## Verification
 
-- Verify local rendering using a static HTTP server:
-  ```bash
-  python3 -m http.server 8000
-  ```
-- Test across mobile, tablet, and desktop viewports.
-- Check browser console for errors, unhandled exceptions, or rendering layout shifts.
+- `python3 tools/build.py` succeeds.
+- No broken internal links or fragments, and no horizontal scroll at 375, 768 and 1280 px wide.
+- No console errors. Keyboard focus is visible.
+- Claims re-checked against the chain repository; a fresh-eyes reviewer is preferred for any change to numbers.

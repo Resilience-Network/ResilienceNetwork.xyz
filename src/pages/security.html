@@ -1,0 +1,25 @@
+<!--meta
+{"path": "security/", "title": "Reporting a vulnerability", "nav": "",
+ "h1": "Reporting a vulnerability",
+ "lead": "If you find a way to break safety, liveness, authorization, privacy or the accounting of funds in Resilience Network, please tell us privately first.",
+ "crumbs": [["Security", "/security/"]],
+ "description": "How to report a vulnerability in Resilience Network: contact, what to include, scope and how reports are handled.",
+ "toc": false}
+-->
+<section id="contact" data-unnumbered>
+<h2>Contact</h2>
+<p>Email <a href="mailto:dev.durgeshkhade@gmail.com?subject=SECURITY">dev.durgeshkhade@gmail.com</a> with "SECURITY" in the subject line.</p>
+<p>Include the affected component and, if you know them, the revision or manifest number; steps or a proof of concept and the impact you expect; and whether and when you plan to publish.</p>
+</section>
+
+<section id="scope" data-unnumbered>
+<h2>Scope</h2>
+<p><strong>In scope:</strong> the protocol as specified on this site, meaning consensus, execution and the EVM, authorization and recovery, shielded transfers, networking and RPC, as well as the command-line client, the SDK and this website.</p>
+<p><strong>Out of scope:</strong> attacks that need more than one third of voting power; social engineering; denial of service against infrastructure we do not operate; and automated scanner output without a demonstrated impact.</p>
+</section>
+
+<section id="handling" data-unnumbered>
+<h2>How reports are handled</h2>
+<p>We acknowledge the report, confirm the issue, fix it, and credit you if you wish. Details of a finding are published on <a href="/assurance/#reviews">Assurance</a> only after its fix ships. There is no public network and no bug bounty yet; a bounty is one of the <a href="/status/#gates">mainnet release gates</a>.</p>
+<p>A machine-readable contact is published at <a href="/.well-known/security.txt"><code>/.well-known/security.txt</code></a>.</p>
+</section>

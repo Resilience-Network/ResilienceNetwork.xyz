@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accounts and authorization | Resilience Network</title>
+<meta name="description" content="Native account authorization on Resilience Network: DIRECT, ROOT and SESSION authority, session grants and policies, revocation ordering, consensus limits, deposits, P-256 passkey sessions, guardian recovery, sponsorship and .rsc names.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/protocol/accounts/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Accounts and authorization | Resilience Network">
+<meta property="og:description" content="Native account authorization on Resilience Network: DIRECT, ROOT and SESSION authority, session grants and policies, revocation ordering, consensus limits, deposits, P-256 passkey sessions, guardian recovery, sponsorship and .rsc names.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/protocol/accounts/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/" class="is-section">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/protocol/">Protocol</a> / <a href="/protocol/accounts/">Accounts</a></div>
+    <span class="badge b-impl">Implemented</span>
+    <h1>Accounts and authorization</h1>
+    <p class="lead">On most chains, one private key is the whole account. On Resilience, an account keeps a stable address while its authority can change: a threshold of root keys, expiring session keys bound to a policy, a guardian quorum after a delay. All of it is native protocol evaluated by consensus, with no smart-contract wallet in the path.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc">
+    <nav class="toc" aria-label="On this page"><h2>On this page</h2><ol><li><a href="#modes"><span class="n">§1</span><span>Three authority modes</span></a></li><li><a href="#decisions"><span class="n">§2</span><span>Four separate decisions</span></a></li><li><a href="#grants"><span class="n">§3</span><span>Session grants and policies</span></a></li><li><a href="#revocation"><span class="n">§4</span><span>Ordering and revocation</span></a></li><li><a href="#limits"><span class="n">§5</span><span>Consensus limits</span></a></li><li><a href="#deposits"><span class="n">§6</span><span>Deposits and the security reserve</span></a></li><li><a href="#passkeys"><span class="n">§7</span><span>P-256 passkey sessions</span></a></li><li><a href="#recovery"><span class="n">§8</span><span>Guardian recovery</span></a></li><li><a href="#sponsorship"><span class="n">§9</span><span>Sponsored transactions</span></a></li><li><a href="#names"><span class="n">§10</span><span>Names</span></a></li></ol><div class="pager"><a href="/protocol/execution/">Previous: Execution</a><a href="/protocol/privacy/">Next: Privacy</a></div></nav>
+    <article class="prose">
+<div class="pull"><p>A valid credential, plus active on-chain authorization, plus every policy constraint satisfied, gives permission for one exact state transition.</p></div>
+
+<section id="modes">
+<h2><span class="n">§1</span>Three authority modes<a class="anchor" href="#modes" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Mode</th><th scope="col">Who signs</th><th scope="col">Can do</th><th scope="col">Keys</th></tr></thead>
+<tbody>
+<tr><td>DIRECT</td><td>The single key that derives the address</td><td>Anything, like a conventional account</td><td>Ed25519</td></tr>
+<tr><td>ROOT</td><td>Exactly a threshold of up to 8 root keys</td><td>Anything, including every authorization change</td><td>Ed25519</td></tr>
+<tr><td>SESSION</td><td>One session key under one grant</td><td>Only what the grant's policy allows</td><td>Ed25519 or P-256</td></tr>
+</tbody>
+</table></div>
+<p>A DIRECT account switches to ROOT mode irreversibly and keeps its address. Contract accounts have no signing authority of their own.</p>
+</section>
+
+<section id="decisions">
+<h2><span class="n">§2</span>Four separate decisions<a class="anchor" href="#decisions" aria-label="Link to this section">#</a></h2>
+<figure class="fig" id="fig-4">
+<div class="frame">
+<svg viewBox="0 0 680 300" role="img" aria-labelledby="fig4-t">
+<title id="fig4-t">Authorization is decided in four steps. Failing any of the first three makes the transaction invalid; failing the fourth produces a failed receipt.</title>
+<defs><marker id="f4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+<marker id="f4r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-r" d="M0 0L10 5L0 10z"/></marker></defs>
+<g><rect class="bx" x="30" y="16" width="300" height="52" rx="7"/><text class="n" x="46" y="38">1</text><text class="t" x="62" y="38">Cryptographic</text><text class="s" x="62" y="57">did the credential sign this exact intent?</text></g>
+<g><rect class="bx" x="30" y="88" width="300" height="52" rx="7"/><text class="n" x="46" y="110">2</text><text class="t" x="62" y="110">Authorization</text><text class="s" x="62" y="129">is it currently authorized for this account?</text></g>
+<g><rect class="bx" x="30" y="160" width="300" height="52" rx="7"/><text class="n" x="46" y="182">3</text><text class="t" x="62" y="182">Policy</text><text class="s" x="62" y="201">is the action inside its authority?</text></g>
+<g><rect class="bx-a" x="30" y="232" width="300" height="52" rx="7"/><text class="n" x="46" y="254">4</text><text class="t" x="62" y="254">Execution</text><text class="s" x="62" y="273">does the action succeed?</text></g>
+<path class="ln" d="M180 68V86" marker-end="url(#f4a)"/><path class="ln" d="M180 140V158" marker-end="url(#f4a)"/><path class="ln" d="M180 212V230" marker-end="url(#f4a)"/>
+<path class="ln-r" d="M330 42H372V186H330"/><path class="ln-r" d="M372 114H402" marker-end="url(#f4r)"/>
+<g><rect class="bx-r" x="404" y="86" width="250" height="56" rx="7"/><text class="t" x="420" y="109">No: transaction is invalid</text><text class="s" x="420" y="128">never included in any block</text></g>
+<path class="ln" d="M330 258H402" marker-end="url(#f4a)"/>
+<g><rect class="bx" x="404" y="226" width="250" height="64" rx="7"/><text class="t" x="420" y="249">Included either way</text><text class="s" x="420" y="267">success, or a failed receipt that</text><text class="s" x="420" y="282">consumes the nonce and actual gas</text></g>
+</svg>
+</div>
+<figcaption><b>Figure 4.</b> The authorization funnel. Steps 1 to 3 decide whether a transaction may be in a block at all; step 4 only decides its receipt.</figcaption>
+</figure>
+</section>
+
+<section id="grants">
+<h2><span class="n">§3</span>Session grants and policies<a class="anchor" href="#grants" aria-label="Link to this section">#</a></h2>
+<p>A grant is an immutable on-chain record that binds one session public key to one policy, a validity interval in block heights, a private nonce lane, and usage counters. A policy is a conjunction of built-in rules: every enabled rule applies, and none can call contract code, read a clock or reach an external service.</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Policy part</th><th scope="col">Constrains</th></tr></thead>
+<tbody>
+<tr><td>Fee policy, required</td><td>Maximum gas, maximum price, maximum fee per transaction, lifetime fee limit, optional token bucket</td></tr>
+<tr><td>Transfers</td><td>Recipients (a Merkle set), amounts, rate</td></tr>
+<tr><td>Contract calls</td><td>Contracts, method selectors, ABI-head argument constraints, value</td></tr>
+<tr><td>Contract creation</td><td>Allowed creation rules</td></tr>
+<tr><td>Stake, unstake, delegate, claim</td><td>Validators and amounts</td></tr>
+<tr><td>Attempts</td><td>Every authorized attempt counts, including failures and cancellations</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="revocation">
+<h2><span class="n">§4</span>Ordering and revocation<a class="anchor" href="#revocation" aria-label="Link to this section">#</a></h2>
+<p>Every valid block places all control transactions before all user transactions. An included revocation, revoke-all or root rotation therefore takes effect before any session action in the same block, and a new grant cannot act in the block that creates it.</p>
+<p>Revocation takes effect at inclusion and finality. The protocol cannot force a proposer to include it, so wallets broadcast revocations on several paths and show them as pending until finalized. Cancelling a session is not revoking it.</p>
+</section>
+
+<section id="limits">
+<h2><span class="n">§5</span>Consensus limits<a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table class="params">
+<thead><tr><th scope="col">Limit</th><th scope="col">Value</th></tr></thead>
+<tbody>
+<tr><td>Root keys per account</td><td>8</td></tr>
+<tr><td>Active grants per account</td><td>64</td></tr>
+<tr><td>Session lifetime</td><td>432,000 blocks, about 10 days at the 2 s target</td></tr>
+<tr><td>Policy size</td><td>16,384 bytes</td></tr>
+<tr><td>Call rules / creation rules</td><td>64 / 32</td></tr>
+<tr><td>Recipients per rule</td><td>128</td></tr>
+<tr><td>Argument constraints per call rule</td><td>32</td></tr>
+<tr><td>Authorization witness</td><td>1,098 bytes</td></tr>
+<tr><td>Authorization writes per transaction / per block</td><td>16 / 4,096</td></tr>
+</tbody>
+</table></div>
+<p>A transaction over any limit is invalid, not merely out of gas. Authorization gas is charged per attempted signature, trie operation, policy rule, constraint and inspected byte, before expensive work starts. These constants are candidates until measured on the minimum supported validator hardware.</p>
+</section>
+
+<section id="deposits">
+<h2><span class="n">§6</span>Deposits and the security reserve<a class="anchor" href="#deposits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Grant deposit:</strong> the larger of 1 RSC and 0.0001 RSC per stored byte, locked in the grant. An explicit revocation refunds all of it. Anyone may clean up an expired grant and earn 2%; the owner receives the other 98%.</li>
+<li><strong>Security reserve:</strong> while any grant is active, sessions must leave at least the reserve untouched (minimum 0.1 RSC). Only ROOT can spend it, so the owner can always afford an emergency revocation.</li>
+</ul>
+</section>
+
+<section id="passkeys">
+<h2><span class="n">§7</span>P-256 passkey sessions<a class="anchor" href="#passkeys" aria-label="Link to this section">#</a></h2>
+<p>Session grants accept P-256 keys (scheme 0x02): 64-byte X‖Y public keys and raw 64-byte r‖s signatures over the unchanged session digest. Browser passkeys and secure enclaves can therefore hold session keys. The chain verifies raw ECDSA only; wallets must validate the WebAuthn ceremony themselves. DIRECT, ROOT, validator and network keys remain Ed25519.</p>
+</section>
+
+<section id="recovery">
+<h2><span class="n">§8</span>Guardian recovery<a class="anchor" href="#recovery" aria-label="Link to this section">#</a></h2>
+<p>A ROOT account may enroll up to three guardians with a threshold. When guardians reach quorum on a replacement Ed25519 root key, the replacement is frozen and two clocks start: 100,800 blocks <em>and</em> 604,800 seconds, which is seven days. Finalization is allowed only after both. Faster slots do not shorten the seven days.</p>
+<figure class="fig" id="fig-5">
+<div class="frame">
+<svg viewBox="0 0 680 210" role="img" aria-labelledby="fig5-t">
+<title id="fig5-t">Recovery timeline: enroll, guardian votes, quorum freezes the replacement, both delays elapse, finalize. The owner can cancel until finalization.</title>
+<defs><marker id="f5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<path class="ln" d="M20 120H660" marker-end="url(#f5a)"/>
+<g><circle cx="50" cy="120" r="7" fill="#fff" stroke="#3d4763" stroke-width="1.5"/><text class="t" x="50" y="152" text-anchor="middle">Enroll</text><text class="s" x="50" y="170" text-anchor="middle">owner, in advance</text></g>
+<g><circle cx="165" cy="120" r="7" fill="#fff" stroke="#3d4763" stroke-width="1.5"/><text class="t" x="165" y="152" text-anchor="middle">Votes</text><text class="s" x="165" y="170" text-anchor="middle">guardians</text></g>
+<g><circle cx="270" cy="120" r="8" fill="#002fa6"/><text class="t" x="270" y="152" text-anchor="middle">Quorum</text><text class="s" x="270" y="170" text-anchor="middle">replacement frozen</text></g>
+<rect class="bx-g" x="282" y="104" width="306" height="32" rx="5"/>
+<text class="tn" x="435" y="125" text-anchor="middle">100,800 blocks and 604,800 s</text>
+<g><circle cx="610" cy="120" r="8" fill="#1d6b40"/><text class="t" x="610" y="152" text-anchor="middle">Finalize</text><text class="s" x="610" y="170" text-anchor="middle">after both</text></g>
+<path class="ln" d="M270 62V56H588V62"/>
+<text class="tn" x="429" y="46" text-anchor="middle">Owner can cancel at any time</text>
+<text class="s" x="429" y="80" text-anchor="middle">cancellations are ordered before finalizations</text>
+</svg>
+</div>
+<figcaption><b>Figure 5.</b> Recovery is slow on purpose. At the 2 s target, the block delay is about 2.3 days, so the seven-day clock is the one that binds. Not to scale.</figcaption>
+</figure>
+<ul>
+<li>Finalization replaces authority atomically, invalidates all sessions, and keeps the address, balances, stake, names and deposits.</li>
+<li>Guardians never gain spending authority before finalization. A guardian quorum can take over an enrolled account whose owner fails to cancel, so owners must watch recovery state and keep enough funds to cancel.</li>
+<li>A lost root key cannot be rescued without prior enrollment. Sessions cannot configure, vote, cancel or finalize recovery.</li>
+</ul>
+</section>
+
+<section id="sponsorship">
+<h2><span class="n">§9</span>Sponsored transactions<a class="anchor" href="#sponsorship" aria-label="Link to this section">#</a></h2>
+<p>A separate DIRECT account can pay gas for a DIRECT or ROOT sender. The sponsor signs with its own nonce and its own domain, <code>RESILIENCE_SPONSOR_AUTH_V1</code>, and funds the maximum gas; the sender still authorizes the action and funds any value it moves. Sessions cannot be sponsored, self-sponsorship is rejected, and sponsorship pays in RSC only. It is not an ERC-4337 entry point.</p>
+</section>
+
+<section id="names">
+<h2><span class="n">§10</span>Names<a class="anchor" href="#names" aria-label="Link to this section">#</a></h2>
+<p>Names end in <code>.rsc</code> and are 1 to 63 lowercase ASCII letters, digits and interior hyphens. Registration uses commit and reveal, so a name is never published before its owner has committed to it.</p>
+<div class="table-wrap"><table class="params">
+<thead><tr><th scope="col">Label length</th><th scope="col" class="num">Registration burn</th></tr></thead>
+<tbody>
+<tr><td>1 character</td><td class="num">500 RSC</td></tr>
+<tr><td>2 characters</td><td class="num">200 RSC</td></tr>
+<tr><td>3 characters</td><td class="num">100 RSC</td></tr>
+<tr><td>4 characters</td><td class="num">50 RSC</td></tr>
+<tr><td>5 to 9 characters</td><td class="num">10 RSC</td></tr>
+<tr><td>10 or more</td><td class="num">5 RSC</td></tr>
+</tbody>
+</table></div>
+<p>Renewal costs half the registration burn, and a commit burns 0.1 RSC. The reveal delay is 3 blocks, a commit times out after 43,200 blocks, a registration lasts 5,256,000 blocks (about 122 days at the 2 s target), and the grace period is 438,000 blocks. Expired names stop resolving. Policies should pin a resolved address, never a name, so a later name change cannot widen authority.</p>
+</section>
+
+<p class="sources">Sources: Session Authorization Protocol 0.2.0 and its V1 decision record; <code class="src">pkg/sessionauth</code>, <code class="src">pkg/nameservice</code>, <code class="src">internal/state/transition_v2.go</code>, <code class="src">internal/state/recovery.go</code>; session-authorization threat model 0.2.0.</p><details class="cite">
+<summary>Cite this page</summary>
+<pre><code>@misc{resilience-protocol-accounts,
+  title  = {{Accounts and authorization}},
+  author = {{Resilience Network}},
+  year   = {2026},
+  note   = {Reference implementation c3acec4, protocol manifest r28},
+  url    = {https://resiliencenetwork.xyz/protocol/accounts/}
+}</code></pre>
+</details>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>

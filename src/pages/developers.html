@@ -1,0 +1,84 @@
+<!--meta
+{"path": "developers/", "title": "For developers", "nav": "developers",
+ "h1": "For developers",
+ "lead": "There is no public endpoint yet, and the source code is private during pre-mainnet development. This page documents the interfaces as they stand, so you can plan an integration and know where it will differ from Ethereum.",
+ "crumbs": [["Developers", "/developers/"]],
+ "description": "Integrating with Resilience Network: what differs from Ethereum, the JSON-RPC surface (67 methods), the TypeScript SDK's scope, command-line tools, building from source and showing authority to users.",
+ "sources": "JSON-RPC reference and registered method inventory; wallet integration guide; CLI guide; SDK README and canonical API reference."}
+-->
+<section id="first">
+<h2>Five things to know first</h2>
+<ol>
+<li><strong>Ethereum wallets cannot sign Resilience transactions.</strong> <code>eth_sendRawTransaction</code> accepts the chain's own V2 envelope, not Ethereum's RLP transactions. Use the TypeScript SDK (private and unpublished for now) or the command-line client.</li>
+<li><strong>Bind every signature to the chain.</strong> Configure the expected chain ID, genesis and capability in your application. Never learn them from the RPC endpoint you are talking to.</li>
+<li><strong>A simulation is advice.</strong> State, nonces, fees, grants and activation can all change before inclusion.</li>
+<li><strong>An ambiguous submission is not a failure.</strong> If a submit times out, keep the canonical bytes and the transaction ID and look that ID up. Never re-sign a replacement blindly.</li>
+<li><strong>Pending transactions are public.</strong> Use slippage bounds and deadline heights on market-sensitive actions, and never put secrets in calldata.</li>
+</ol>
+</section>
+
+<section id="rpc">
+<h2>JSON-RPC</h2>
+<p>JSON-RPC 2.0 over HTTP and WebSocket. A batch holds 1 to 32 calls, and a request or message is at most 2 MiB. A request without an <code>id</code> is a notification: it executes and gets no response. Successful responses always include <code>result</code>, even when it is <code>null</code>. Transaction lookups cover the node's recent window of up to 1,000 blocks, so <code>null</code> does not prove a transaction never existed.</p>
+<table>
+<caption>Registered methods by family. Names without a prefix exist as both <code>eth_</code> and <code>rsc_</code>.</caption>
+<thead><tr><th scope="col">Family</th><th scope="col">Methods</th></tr></thead>
+<tbody>
+<tr><td>web3 and net</td><td><code>web3_clientVersion</code>, <code>web3_sha3</code>, <code>net_version</code>, <code>net_peerCount</code>, <code>net_listening</code></td></tr>
+<tr><td>Chain and accounts</td><td><code>chainId</code>, <code>blockNumber</code>, <code>getBalance</code>, <code>getTransactionCount</code>, <code>getCode</code>, <code>getStorageAt</code>, <code>getBlockByNumber</code>, <code>getBlockByHash</code>, <code>syncing</code></td></tr>
+<tr><td>Transactions</td><td><code>sendRawTransaction</code>, <code>getTransactionByHash</code>, <code>getTransactionReceipt</code>, <code>call</code>, <code>estimateGas</code>, <code>getLogs</code></td></tr>
+<tr><td>Fees</td><td><code>gasPrice</code>, <code>maxPriorityFeePerGas</code>, <code>feeHistory</code></td></tr>
+<tr><td>Consensus, <code>rsc_</code> only</td><td><code>getValidators</code>, <code>getEpochInfo</code>, <code>getStakeInfo</code>, <code>nodeInfo</code>, <code>getFinalizedHeader</code></td></tr>
+<tr><td>Authorization, <code>rsc_</code> only</td><td><code>getRootAuthority</code>, <code>getRecovery</code>, <code>getSessionGrant</code>, <code>getSessionNonce</code>, <code>getSessionUsage</code>, <code>decodePolicy</code>, <code>previewPolicy</code>, <code>estimateAuthorizationGas</code>, <code>simulateAuthorizedTransaction</code>, <code>getAuthorizationFinalityStatus</code>, <code>getAuthorizationProof</code></td></tr>
+<tr><td>Shielded, <code>rsc_</code> only</td><td><code>getShieldedPoolBalance</code>, <code>getShieldedTreeState</code>, <code>hasNullifier</code>, <code>getShieldedCompactBlock</code>, <code>getShieldedCompactBlocks</code>, <code>getShieldedTransaction</code></td></tr>
+<tr><td>Names, <code>rsc_</code> only</td><td><code>resolveName</code>, <code>reverseName</code>, <code>nameInfo</code>, <code>nameQuote</code></td></tr>
+</tbody>
+</table>
+<p>The 18 <code>eth_</code> methods each have an <code>rsc_</code> alias served by the same handler: 67 registered methods in total, plus the subscribe and unsubscribe transport methods. Subscriptions are <code>newHeads</code>, <code>newPendingTransactions</code>, <code>logs</code> and <code>syncing</code>, up to 64 per connection. Notifications to a slow consumer can be dropped, so reconcile with reads after reconnecting.</p>
+<pre><code>curl -s http://127.0.0.1:8545 \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"rsc_chainId","params":[],"id":1}'</code></pre>
+</section>
+
+<section id="sdk">
+<h2>TypeScript SDK</h2>
+<p>A standalone TypeScript SDK covers the transparent account and session flow. Its repository is private and it is not published to npm yet.</p>
+<ul>
+<li>Canonical transaction, session and grant codecs and typed hashes, checked against pinned chain vectors.</li>
+<li>A bounded HTTP JSON-RPC transport with typed chain, authorization, fee and simulation reads.</li>
+<li>Raw Ed25519 and P-256 signers. You supply key custody; the SDK never stores private keys.</li>
+<li>A lifecycle API for DIRECT activation, ROOT grants, both session key schemes and revocation, with one-attempt submission that reports accepted, rejected, not sent or unknown.</li>
+<li>WebAuthn representation parsers for passkey sessions.</li>
+</ul>
+<p>Out of scope today: a shielded wallet and the sponsorship lifecycle. Separate release gates remain for registry publication and licensing, production relying-party durability, other browser engines and physical devices, and independent security review.</p>
+</section>
+
+<section id="tools">
+<h2>Command-line tools</h2>
+<table>
+<thead><tr><th scope="col">Binary</th><th scope="col">Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>resilienced</code></td><td>Node daemon</td></tr>
+<tr><td><code>resilience-cli</code></td><td>Chain status, transfers (including to <code>.rsc</code> names), sponsorship, root authority and recovery, sessions, staking, names, the shielded wallet, snapshots</td></tr>
+<tr><td><code>keygen</code></td><td>Validator keys and encrypted keystores</td></tr>
+<tr><td><code>resilience-signer</code></td><td>Remote validator signer over mutual TLS</td></tr>
+<tr><td><code>genesis-ceremony</code></td><td>Genesis generation</td></tr>
+<tr><td><code>faucet</code>, <code>explorer</code>, <code>resilience-bench</code></td><td>Development-network tools</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="build">
+<h2>Building from source</h2>
+<p>For collaborators with access. The build needs Go at the version pinned in <code>go.mod</code>, Rust 1.88.0, a C toolchain and Python 3.11 or newer.</p>
+<pre><code>make build
+./build/resilienced --help
+./build/resilience-cli --help</code></pre>
+<p><code>make build</code> builds the native cryptography and all binaries. A build with <code>CGO_ENABLED=0</code> cannot process shielded activity and must never be used as evidence for it. The local development guide starts a four-validator network; a single daemon without a matching validator set does not produce blocks.</p>
+</section>
+
+<section id="display">
+<h2>Showing authority to users</h2>
+<p>Before a user approves a session grant, show the application, the session key's fingerprint and scheme, the allowed actions, recipients and method selectors, the validity heights, spending and fee limits, attempt limits, and any contract or proxy risk. Derive that display from the same bytes that produce the policy hash, so what the user reads is what they sign.</p>
+<p>Keep session secrets apart from root secrets, and never send a private key to an RPC endpoint. A local "disconnect" button revokes nothing; only a finalized revocation does.</p>
+</section>

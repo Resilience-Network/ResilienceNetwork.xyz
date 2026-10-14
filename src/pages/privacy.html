@@ -1,0 +1,98 @@
+<!--meta
+{"path": "protocol/privacy/", "title": "Shielded transfers with Orchard", "nav": "protocol",
+ "h1": "Shielded transfers with Orchard",
+ "lead": "Resilience integrates Zcash's Orchard protocol natively. Consensus verifies real Halo 2 proofs, RedPallas signatures, and exact agreement between each proof and the chain-visible effects, with no trusted setup. Light wallets check the compact blocks they scan against attested headers and a finality certificate.",
+ "crumbs": [["Protocol", "/protocol/"], ["Privacy", "/protocol/privacy/"]],
+ "badge": "<span class=\"badge b-exp\">Experimental</span>",
+ "description": "Orchard shielded transfers on Resilience Network: what is implemented, how proofs bind to chain effects, turnstile accounting, authenticated compact blocks, selective disclosure, visibility limits and the activation interlock.",
+ "pager": {"prev": ["Accounts", "/protocol/accounts/"], "next": ["Network and economics", "/protocol/network/"]},
+ "cite": true,
+ "sources": "<code class=\"src\">pkg/shielded</code>, <code class=\"src\">pkg/shielded/wallet</code>, <code class=\"src\">pkg/lightclient</code>, native Rust library; shielded capabilities reference; shielded threat model; shielded protocol reference."}
+-->
+<div class="note warn"><span class="t">Off for the first public testnet</span><p>Shielded transfers are not for value until an independent external audit of the cryptography and its integration has been completed and its findings fixed.</p></div>
+
+<section id="implemented">
+<h2>What is implemented</h2>
+<table>
+<thead><tr><th scope="col">Capability</th><th scope="col">State</th></tr></thead>
+<tbody>
+<tr><td>Deposit (shield), private payment, withdrawal (unshield)</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Consensus verification of Halo 2 proofs, RedPallas binding and spend signatures</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Orchard note tree of depth 32, recent anchors, permanent nullifiers in the state root</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Authenticated compact-block scanning, version 3</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Viewing keys, watch-only wallets, accounting export, payment receipts</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Automatic reorganization recovery within 256 blocks</td><td><span class="badge b-impl">Implemented</span></td></tr>
+<tr><td>Hardware-wallet integration</td><td><span class="badge b-no">Not implemented</span></td></tr>
+<tr><td>Production proving-resource qualification</td><td><span class="badge b-no">Not done</span></td></tr>
+<tr><td>Independent external cryptographic audit</td><td><span class="badge b-no">Outstanding</span></td></tr>
+</tbody>
+</table>
+<p>The native library pins Orchard revision <code>29d1d55db62153dcaeef8ef631c8991c53ed1248</code>, the <code>FixedPostNu6_2</code> circuit and <code>orchard_v2</code> bundles.</p>
+</section>
+
+<section id="binding">
+<h2>Binding proofs to the chain</h2>
+<p>A valid proof of a different statement is not enough. Consensus checks that the native bundle matches the transaction's declared operation, anchor, nullifiers, commitments and value balance exactly. Every action, including dummy actions, contributes a nullifier, a commitment and a spend signature. Nullifiers reject double spends both in the transaction pool and in committed state, and a failed execution rolls back shielded state together with accounts.</p>
+</section>
+
+<section id="turnstile">
+<h2>Accounting: the turnstile</h2>
+<p>One shielded unit equals 10<sup>10</sup> base units, which is eight decimal places of RSC, and conversions must be exact. The value balance is the negative deposit amount for a deposit, the fee for a private payment, and the amount plus the fee for a withdrawal. The public pool balance, the transparent debits and credits, and fees must reconcile in every block.</p>
+</section>
+
+<section id="compact">
+<h2>Authenticated compact blocks</h2>
+<p>Wallets download compact blocks that carry the block's ordered transaction IDs and, for each shielded transaction, its effects, anchor, nullifiers, commitment and ciphertext pairs (724 bytes per action) and an authorization-data commitment. Proofs are not transported. On a measured two-action native corpus, this is <strong>84% less bandwidth</strong> than shipping whole bundles.</p>
+<figure class="fig" id="fig-6">
+<div class="frame">
+<svg viewBox="0 0 680 400" role="img" aria-labelledby="fig6-t">
+<title id="fig6-t">The chain of checks from the finality certificate down to the decrypted note.</title>
+<defs><marker id="f6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<g><rect class="bx-a" x="30" y="14" width="300" height="40" rx="7"/><text class="t" x="46" y="39">Finality certificate</text></g>
+<g><rect class="bx" x="30" y="70" width="300" height="40" rx="7"/><text class="t" x="46" y="95">Header</text></g>
+<g><rect class="bx" x="30" y="126" width="300" height="40" rx="7"/><text class="t" x="46" y="151">TxRoot</text></g>
+<g><rect class="bx" x="30" y="182" width="300" height="40" rx="7"/><text class="t" x="46" y="207">Ordered transaction IDs</text></g>
+<g><rect class="bx" x="30" y="238" width="300" height="40" rx="7"/><text class="t" x="46" y="263">Effects and auth commitment</text></g>
+<g><rect class="bx" x="30" y="294" width="300" height="40" rx="7"/><text class="t" x="46" y="319">Anchor, nullifiers, commitments</text></g>
+<g><rect class="bx-g" x="30" y="350" width="300" height="40" rx="7"/><text class="t" x="46" y="375">Trial decryption</text></g>
+<path class="ln" d="M180 54V68" marker-end="url(#f6a)"/><path class="ln" d="M180 110V124" marker-end="url(#f6a)"/><path class="ln" d="M180 166V180" marker-end="url(#f6a)"/><path class="ln" d="M180 222V236" marker-end="url(#f6a)"/><path class="ln" d="M180 278V292" marker-end="url(#f6a)"/><path class="ln" d="M180 334V348" marker-end="url(#f6a)"/>
+<text class="s" x="352" y="38">more than 2/3 of power, over the set the header commits</text>
+<text class="s" x="352" y="94">block, parent and TxRoot attested for every height</text>
+<text class="s" x="352" y="150">wallet recomputes TxRoot from the served IDs</text>
+<text class="s" x="352" y="206">each ID recomputed from effects and auth commitment</text>
+<text class="s" x="352" y="262">effects bundle commitment binds what follows</text>
+<text class="s" x="352" y="318">appended to the wallet's incremental tree</text>
+<text class="s" x="352" y="374">corrupted ciphertext: no credit; swapped: skipped</text>
+</svg>
+</div>
+<figcaption><b>Figure 6.</b> The authentication chain for one scanned height. A block that fails these checks leaves no trace in the wallet. A corrupted ciphertext simply fails to decrypt; a swapped one is detected and skipped, never credited to the wrong note.</figcaption>
+</figure>
+<p>The sync driver verifies the finalized sync-tip certificate when finality is available and requires each fresh block to extend the checkpoint. A changed checkpoint within the retained 256-block history rewinds to the common ancestor and rescans, keeping pending spend reservations.</p>
+<div class="note warn"><span class="t">Known limits</span><p>The validator set itself is trusted on first contact until out-of-band anchor pinning is implemented. The light-client path also has an open internal finding, so for now treat the serving node as trusted for scanning.</p></div>
+</section>
+
+<section id="disclosure">
+<h2>Selective disclosure</h2>
+<ul>
+<li><strong>Full viewing keys</strong> let an auditor or accountant scan activity without the power to spend.</li>
+<li><strong>Accounting export</strong> produces CSV or JSON of the selected activity.</li>
+<li><strong>Payment receipts</strong> disclose one payment. Verifying one needs an independently trusted anchor and the expected sender key; a receipt that is only self-consistent does not prove inclusion.</li>
+</ul>
+<p>Local note state and the spending keystore are encrypted with the wallet passphrase. Watch-only keystores still hold plaintext viewing keys, and exports disclose what they select.</p>
+</section>
+
+<section id="visible">
+<h2>What stays visible</h2>
+<p>Proofs hide who paid whom, and how much, inside the pool. They do not hide deposit and withdrawal amounts or the transparent account on that side, fees, the number of actions, or network-level timing. Proof privacy is not network anonymity.</p>
+</section>
+
+<section id="interlock">
+<h2>The activation interlock</h2>
+<p>Shielded processing is off unless <code>shielded_activation_height</code> is set, and setting it also requires an explicit experimental acknowledgment when the node starts. Every validator and wallet needs the native library. A pure-Go build rejects shielded activity and cannot follow a chain that contains it, so it is never used as evidence for shielded behavior.</p>
+<p>The public testnet launch procedure sets the activation height to zero explicitly.</p>
+</section>
+
+<section id="history">
+<h2>History</h2>
+<p><span class="badge b-hist">Historical</span> An internal review on 2026-09-12 found that the shielded layer of that time verified only proof length. It was replaced with native Orchard proving and verification, and the regression tests for those findings now pass natively. That episode is why this site separates <em>implemented</em> from <em>qualified</em>.</p>
+</section>

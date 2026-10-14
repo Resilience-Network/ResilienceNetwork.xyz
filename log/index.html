@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research log | Resilience Network</title>
+<meta name="description" content="A dated record of Resilience Network protocol manifest revisions r4 to r28, reviews and measurements since development began on 2026-09-07.">
+<link rel="canonical" href="https://resiliencenetwork.xyz/log/">
+
+<meta name="theme-color" content="#002fa6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resilience Network">
+<meta property="og:title" content="Research log | Resilience Network">
+<meta property="og:description" content="A dated record of Resilience Network protocol manifest revisions r4 to r28, reviews and measurements since development began on 2026-09-07.">
+<meta property="og:url" content="https://resiliencenetwork.xyz/log/">
+<meta property="og:image" content="https://resiliencenetwork.xyz/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/img/logo-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css?v=20261015">
+<script src="/assets/js/site.js?v=20261015" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="Resilience Network, home">
+      <img src="/assets/img/logo-192.png" width="32" height="32" alt="">
+      <span>Resilience Network</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul><li><a href="/protocol/">Protocol</a></li><li><a href="/assurance/">Assurance</a></li><li><a href="/status/">Status</a></li><li><a href="/decisions/">Decisions</a></li><li><a href="/developers/">Developers</a></li><li><a href="/log/" class="is-section">Log</a></li></ul>
+    </nav>
+  </div>
+</header>
+<div class="status-strip" role="note" aria-label="Network status">
+  <div class="inner">
+    <span class="item"><span class="dot" aria-hidden="true"></span>Pre-mainnet research network</span>
+    <span class="item">No public testnet yet</span>
+    <span class="item opt">Protocol manifest r28</span>
+    <span class="item opt">Shielded transfers experimental</span>
+    <a href="/status/">Current status</a>
+  </div>
+</div>
+<main id="main">
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumbs"><a href="/log/">Log</a></div>
+    
+    <h1>Research log</h1>
+    <p class="lead">Each protocol change bumps the manifest revision and requires a fresh genesis. This log records those revisions, and the reviews and measurements between them, newest first. Development started on 2026-09-07; the current revision is r28.</p>
+    
+  </div>
+</div>
+<div class="wrap">
+  <div class="doc no-toc">
+    
+    <article class="prose">
+<section id="entries" data-unnumbered>
+<h2>Entries<a class="anchor" href="#entries" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table class="log rev">
+<thead><tr><th scope="col">Date</th><th scope="col">Revision</th><th scope="col">Entry</th></tr></thead>
+<tbody>
+<tr><td>2026-10-13</td><td></td><td>Internal security review of <code class="src">ef16072</code>, dated 2026-10-12, added to the record; posture on <a href="/assurance/#reviews">Assurance</a>. Robustness re-review planned.</td></tr>
+<tr><td>2026-10-09</td><td></td><td>Public testnet launch procedure defined: transparent-only, shielded transfers off, and the exact profile qualified before endpoints open.</td></tr>
+<tr><td>2026-10-08</td><td>r28</td><td>Saturated creator nonces and non-canonical ECRecover recovery IDs rejected; CREATE diagnostics aligned with Shanghai. Delayed rounds now catch up from authenticated peer progress. Corrupt signing records fail closed.</td></tr>
+<tr><td>2026-10-01</td><td>r27</td><td>Genesis-native formats enforced: V2 only, explicit staking shares, tagged nullifier records. Older development state is rejected. Peer referrals verified against the exact network identity.</td></tr>
+<tr><td>2026-09-30</td><td></td><td>Anchor-authenticated peer sampling proposed (<a href="/decisions/#peers">D7</a>).</td></tr>
+<tr><td>2026-09-28</td><td>r26</td><td>Block-header signatures separated from vote digests by a typed signing domain.</td></tr>
+<tr><td>2026-09-27</td><td>r25</td><td>Full unused CALL stipend returned to the caller.</td></tr>
+<tr><td>2026-09-26</td><td>r17–r24</td><td>CALLCODE semantics; <code>0xEF</code> runtime prefix rejected; transaction beneficiary warm; EIP-2929 call access costs; RETURNDATACOPY gas precedence; forced evidence inclusion (r22); 1,025-frame call depth; ECRecover repriced to 9,000 gas (r24). Also: authenticated compact blocks v3, encrypted keystore and remote signer, certified snapshot bootstrap, and the gas-to-time calibration.</td></tr>
+<tr><td>2026-09-25</td><td>r16</td><td>SSTORE net metering and EIP-3529 refunds.</td></tr>
+<tr><td>2026-09-24</td><td>r15</td><td>Zero-length EVM memory ranges ignore their offset.</td></tr>
+<tr><td>2026-09-20</td><td></td><td>First load qualification. Jepsen-style network-fault harness added.</td></tr>
+<tr><td>2026-09-17</td><td></td><td>Threshold randomness beacon proposed, with bias simulations (<a href="/decisions/#beacon">D3</a>).</td></tr>
+<tr><td>2026-09-15</td><td>r12–r14</td><td>Guardian recovery (r12), sponsored transactions (r13), transferable delegation shares (r14).</td></tr>
+<tr><td>2026-09-14</td><td>r11</td><td><code>.rsc</code> name service. The same day: native Orchard spending with live story coverage.</td></tr>
+<tr><td>2026-09-12</td><td></td><td>Second-pass internal audit: 44 findings, 42 fixed with regression tests.</td></tr>
+<tr><td>2026-09-11</td><td></td><td>Native Halo 2 Orchard proving and verification integrated. Functional readiness baseline recorded.</td></tr>
+<tr><td>2026-09-07 to 09-14</td><td>r4–r10</td><td>EVM opcode completeness and the 63/64 gas rule (r4); ABI-head session constraints (r5); EIP-3860 init-code metering (r6); ECVRF secret leader election (r7); the P256VERIFY precompile (r8); P-256 session keys (r9); the EIP-1559 fee market (r10).</td></tr>
+<tr><td>2026-09-07</td><td></td><td>Development begins: consensus, libp2p networking, EVM, command-line client and deployment tooling.</td></tr>
+</tbody>
+</table></div>
+<p class="muted small">As of 2026-10-13, the main branch has 393 commits.</p>
+</section>
+
+<p class="sources">Sources: Protocol manifest revision history and the main branch's commit log at <code class="src">c3acec4</code>.</p>
+    </article>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="stamp">
+    <p>Content verified against the reference implementation at <code class="src">c3acec4</code> (2026-10-13), protocol manifest r28. Numbers on this site describe that revision, not a deployed network.</p>
+  </div>
+  <div class="cols">
+    <div class="about">
+      <h2>Resilience Network</h2>
+      <p>An experimental proof-of-stake network. The source code is private during pre-mainnet development; paths shown in monospace refer to files in the reference implementation.</p>
+    </div>
+    <div>
+      <h2>Protocol</h2>
+      <ul>
+        <li><a href="/protocol/">Overview</a></li>
+        <li><a href="/protocol/consensus/">Consensus</a></li>
+        <li><a href="/protocol/execution/">Execution</a></li>
+        <li><a href="/protocol/accounts/">Accounts</a></li>
+        <li><a href="/protocol/privacy/">Privacy</a></li>
+        <li><a href="/protocol/network/">Network and economics</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Evidence</h2>
+      <ul>
+        <li><a href="/assurance/">Assurance</a></li>
+        <li><a href="/status/">Status</a></li>
+        <li><a href="/decisions/">Decisions</a></li>
+        <li><a href="/log/">Log</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Build</h2>
+      <ul>
+        <li><a href="/developers/">Developers</a></li>
+        <li><a href="/glossary/">Glossary</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Contact</h2>
+      <ul>
+        <li><a href="/security/">Security and disclosure</a></li>
+        <li><a href="mailto:dev.durgeshkhade@gmail.com">dev.durgeshkhade@gmail.com</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>Nothing on this site is an offer of any asset. RSC is the protocol's native unit for fees, staking and rewards.</span>
+    <span>Site updated 2026-10-15</span>
+  </div>
+</footer>
+</body>
+</html>
